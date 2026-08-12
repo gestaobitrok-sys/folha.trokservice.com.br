@@ -1,0 +1,2531 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TROK Service · Folha de Pagamento por Loja</title>
+<style>
+:root{
+  --bg: #f4f2ee;
+  --panel: #ffffff;
+  --ink: #1c1f23;
+  --ink-dim: #5b6168;
+  --line: #e3e0d8;
+  --side-bg: #181a1f;
+  --side-bg2: #20232a;
+  --side-line: #2c2f37;
+  --side-ink: #c9cdd4;
+  --side-ink-dim: #82868f;
+  --accent: #d97a1f;
+  --accent-ink: #ffffff;
+  --accent-soft: #fbe6cf;
+  --good: #2f7a4f;
+  --good-soft: #e4f1e8;
+  --bad: #b53a3a;
+  --bad-soft: #fbe7e7;
+  --warn: #b8860b;
+  --warn-soft: #fbf0d9;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(20,20,15,.06), 0 6px 20px -8px rgba(20,20,15,.18);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--ink);
+  font-size:14px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;font-size:14px;}
+::selection{background:var(--accent-soft);}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+
+.app-shell{
+  display:grid;
+  grid-template-columns:248px 1fr;
+  grid-template-rows:56px 1fr;
+  height:100vh;
+}
+.topbar{
+  grid-column:1 / -1;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:0 16px;
+  background:var(--side-bg);
+  border-bottom:1px solid var(--side-line);
+  color:#fff;
+  z-index:5;
+}
+.brand{
+  display:flex;align-items:center;gap:8px;
+  font-weight:700;letter-spacing:.2px;font-size:15px;
+  white-space:nowrap;
+}
+.brand .mark{
+  width:26px;height:26px;border-radius:7px;
+  background:linear-gradient(135deg,var(--accent),#8a4a10);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;color:#fff;
+  box-shadow:0 1px 0 rgba(255,255,255,.15) inset;
+}
+.brand .sub{font-weight:500;color:var(--side-ink-dim);font-size:12px;}
+.topbar-spacer{flex:1;}
+.competencia-box{
+  display:flex;align-items:center;gap:6px;
+  background:var(--side-bg2);border:1px solid var(--side-line);
+  border-radius:8px;padding:4px 8px;color:var(--side-ink);font-size:12.5px;
+}
+.competencia-box input{
+  background:transparent;border:none;color:#fff;font-weight:600;
+  width:64px;text-align:center;font-family:var(--mono);font-size:13px;
+}
+.topbar-actions{display:flex;gap:6px;flex-wrap:nowrap;}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;
+  transition:transform .05s ease, background .15s ease, border-color .15s ease;
+  white-space:nowrap;
+}
+.btn:hover{border-color:#c9c4b8;}
+.btn:active{transform:translateY(1px);}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+.btn-primary:hover{background:#c26d18;}
+.btn-ghost-dark{background:var(--side-bg2);border-color:var(--side-line);color:var(--side-ink);}
+.btn-ghost-dark:hover{background:#262a32;color:#fff;}
+.btn-sm{padding:4px 9px;font-size:12px;border-radius:6px;}
+.btn-danger{color:var(--bad);border-color:#e3c3c3;background:#fff;}
+.btn-danger:hover{background:var(--bad-soft);}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.icon-btn{
+  width:30px;height:30px;border-radius:7px;border:1px solid var(--line);
+  background:var(--panel);display:inline-flex;align-items:center;justify-content:center;
+  font-size:14px;padding:0;
+}
+.icon-btn:hover{border-color:#c9c4b8;background:#f8f6f2;}
+
+.sidebar{
+  background:var(--side-bg);
+  color:var(--side-ink);
+  border-right:1px solid var(--side-line);
+  overflow-y:auto;
+  display:flex;flex-direction:column;
+}
+.side-search{
+  padding:12px 12px 8px;
+}
+.side-search input{
+  width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--side-line);
+  background:var(--side-bg2);color:#fff;font-size:13px;
+}
+.side-search input::placeholder{color:var(--side-ink-dim);}
+.side-list{list-style:none;margin:4px 0 12px;padding:0 8px;flex:1;}
+.side-item{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:9px 10px;border-radius:8px;margin-bottom:2px;
+  cursor:pointer;color:var(--side-ink);font-size:13px;
+}
+.side-item:hover{background:var(--side-bg2);}
+.side-item.active{background:var(--accent);color:#fff;font-weight:700;}
+.side-item .si-name{display:flex;align-items:center;gap:7px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.side-item .si-flag{color:var(--warn);}
+.side-item.active .si-flag{color:#fff;}
+.side-item .si-meta{display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;}
+.side-item .si-count{font-size:11px;color:var(--side-ink-dim);}
+.side-item.active .si-count{color:rgba(255,255,255,.85);}
+.side-item .si-total{font-family:var(--mono);font-size:11.5px;}
+.side-section-label{
+  font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--side-ink-dim);
+  padding:10px 14px 4px;font-weight:700;
+}
+.side-foot{
+  padding:10px 14px 14px;border-top:1px solid var(--side-line);
+  font-size:11px;color:var(--side-ink-dim);
+}
+.side-foot b{color:var(--side-ink);}
+
+.main{
+  overflow-y:auto;
+  padding:22px 26px 60px;
+}
+.view-header{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+  margin-bottom:18px;flex-wrap:wrap;
+}
+.view-title{display:flex;flex-direction:column;gap:3px;}
+.view-title h1{font-size:21px;margin:0;font-weight:800;letter-spacing:-.2px;}
+.view-title .view-sub{font-size:12.5px;color:var(--ink-dim);}
+.view-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+.kpis{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.kpi{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:12px 16px;min-width:140px;box-shadow:var(--shadow);
+}
+.kpi .kpi-label{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
+.kpi .kpi-value{font-family:var(--mono);font-size:19px;font-weight:700;margin-top:3px;}
+.kpi.good .kpi-value{color:var(--good);}
+.kpi.warn .kpi-value{color:var(--warn);}
+.kpi.pm-banco .kpi-value{color:#2e4f8c;}
+.kpi.pm-dinheiro .kpi-value{color:#2f7a4f;}
+.kpi.pm-caju .kpi-value{color:#9c4a16;}
+
+.pm-chips{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;}
+.pm-chip{
+  font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:99px;
+  display:inline-flex;align-items:center;gap:4px;white-space:nowrap;
+}
+.pm-chip.is-Banco{background:#e3ecfb;color:#1e3f7a;}
+.pm-chip.is-Dinheiro{background:#e1f3e6;color:#1f5c39;}
+.pm-chip.is-Caju{background:#fde6d2;color:#8a4710;}
+.pm-chip .v{font-family:var(--mono);}
+
+.dash-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;
+}
+.loja-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;box-shadow:var(--shadow);cursor:pointer;transition:transform .08s ease, border-color .15s;
+}
+.loja-card:hover{border-color:var(--accent);transform:translateY(-1px);}
+.loja-card .lc-name{font-weight:700;font-size:14.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.loja-card .lc-row{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-dim);margin-bottom:3px;}
+.loja-card .lc-total{font-family:var(--mono);font-weight:700;font-size:16px;margin-top:6px;}
+.loja-card.empty{opacity:.55;}
+.loja-card.flagged{border-color:#e6c373;background:var(--warn-soft);}
+
+.panel{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden;
+}
+table.emp-table{width:100%;border-collapse:collapse;font-size:13px;}
+table.emp-table thead th{
+  text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--ink-dim);font-weight:700;padding:10px 12px;border-bottom:1px solid var(--line);
+  background:#faf9f6;position:sticky;top:0;
+}
+table.emp-table td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle;}
+table.emp-table tbody tr:hover{background:#fbfaf7;}
+table.emp-table tbody tr:last-child td{border-bottom:none;}
+.col-num{text-align:right;font-family:var(--mono);white-space:nowrap;}
+.col-liquido{font-weight:700;color:var(--good);}
+.emp-name{font-weight:700;}
+.emp-cargo{color:var(--ink-dim);font-size:12px;}
+.emp-badge-rateio{display:inline-block;margin-top:3px;font-size:10.5px;font-weight:700;color:#8a4710;background:#fde6d2;border-radius:99px;padding:2px 7px;}
+.emp-badge-adiant{display:inline-block;margin-top:3px;margin-left:4px;font-size:10.5px;font-weight:700;color:#1f5c39;background:#e1f3e6;border-radius:99px;padding:2px 7px;}
+.emp-extra-tag{font-size:11px;color:var(--ink-dim);}
+.badge{
+  display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;
+  background:#eef1ed;color:#3c5d4a;
+}
+.badge.empresa-Contractus{background:#eaf0fb;color:#2e4f8c;}
+.badge.empresa-BMComercio{background:#fdeee2;color:#9c4a16;}
+.badge.empresa-MudScap{background:#f1ecfb;color:#5a3d99;}
+.row-actions{display:flex;gap:6px;justify-content:flex-end;}
+.loja-select-inline{
+  font-size:12px;border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:#fff;
+  max-width:140px;
+}
+.empty-state{
+  padding:40px 20px;text-align:center;color:var(--ink-dim);
+}
+.empty-state .es-icon{font-size:30px;margin-bottom:8px;}
+
+.toast-wrap{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:8px;z-index:200;}
+.toast{
+  background:#1c1f23;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;
+  box-shadow:0 6px 24px -6px rgba(0,0,0,.35);display:flex;align-items:center;gap:8px;
+  animation:toastin .18s ease;
+}
+.toast.good{background:#1f3b29;}
+.toast.bad{background:#3b1f1f;}
+@keyframes toastin{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(20,18,14,.45);display:flex;align-items:center;justify-content:center;
+  z-index:100;padding:20px;
+}
+.modal{
+  background:var(--panel);border-radius:14px;max-width:680px;width:100%;max-height:88vh;
+  display:flex;flex-direction:column;box-shadow:0 24px 60px -10px rgba(0,0,0,.4);
+}
+.modal.modal-lg{max-width:900px;}
+.modal-head{
+  display:flex;align-items:center;justify-content:space-between;padding:16px 20px;
+  border-bottom:1px solid var(--line);
+}
+.modal-head h2{font-size:16px;margin:0;font-weight:800;}
+.modal-body{padding:18px 20px;overflow-y:auto;flex:1;}
+.modal-foot{
+  display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--line);
+}
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:11.5px;font-weight:700;color:var(--ink-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
+.field input[type=text], .field input[type=date], .field input[type=number], .field select, .field textarea{
+  width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);
+}
+.field textarea{resize:vertical;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.section-title{
+  font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-dim);
+  margin:18px 0 8px;display:flex;align-items:center;justify-content:space-between;
+}
+.line-item{
+  display:flex;gap:8px;align-items:center;margin-bottom:6px;
+}
+.line-item input[type=text]{flex:2;padding:7px 9px;border:1px solid var(--line);border-radius:7px;}
+.line-item input[type=number]{flex:1;padding:7px 9px;border:1px solid var(--line);border-radius:7px;font-family:var(--mono);max-width:120px;}
+.line-item .rm{
+  border:none;background:none;color:var(--bad);font-size:16px;cursor:pointer;padding:2px 6px;
+}
+.summary-box{
+  background:#faf9f6;border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-top:14px;
+  display:flex;flex-direction:column;gap:4px;font-size:13px;
+}
+.summary-box .sr{display:flex;justify-content:space-between;}
+.summary-box .sr.total{font-weight:800;font-size:15px;border-top:1px dashed var(--line);margin-top:4px;padding-top:6px;}
+.summary-box .sr .val{font-family:var(--mono);}
+.summary-box .sr.total .val{color:var(--good);}
+
+.dropzone{
+  border:2px dashed #cfc8b6;border-radius:12px;padding:28px 16px;text-align:center;color:var(--ink-dim);
+  background:#fbfaf7;cursor:pointer;
+}
+.dropzone.drag{border-color:var(--accent);background:var(--accent-soft);}
+.dropzone .dz-icon{font-size:26px;margin-bottom:6px;}
+.filelist{margin-top:10px;font-size:12.5px;}
+.filelist .fitem{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line);}
+
+.review-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;}
+.review-table th{text-align:left;font-size:10.5px;color:var(--ink-dim);text-transform:uppercase;padding:6px 8px;border-bottom:1px solid var(--line);}
+.review-table td{padding:6px 8px;border-bottom:1px solid var(--line);}
+.status-pill{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap;}
+.status-pill.update{background:var(--good-soft);color:var(--good);}
+.status-pill.new{background:var(--warn-soft);color:var(--warn);}
+.status-pill.skip{background:#eee;color:#888;}
+.review-table select{font-size:12px;padding:3px 5px;border-radius:6px;border:1px solid var(--line);}
+.review-table .delta-up{color:var(--good);}
+.review-table .delta-down{color:var(--bad);}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px;}
+.tab{padding:8px 12px;font-size:13px;font-weight:600;color:var(--ink-dim);border-bottom:2px solid transparent;cursor:pointer;}
+.tab.active{color:var(--ink);border-color:var(--accent);}
+
+.checklist{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.chk-pill{
+  display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:99px;
+  padding:5px 11px;font-size:12.5px;cursor:pointer;background:#fff;
+}
+.chk-pill input{margin:0;}
+
+#printArea{display:none;}
+@media print{
+  body *{visibility:hidden;}
+  #printArea, #printArea *{visibility:visible;}
+  #printArea{position:absolute;top:0;left:0;width:100%;display:block;padding:0;}
+  *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; color-adjust:exact; }
+  @page{ size: A4 landscape; margin:9mm 8mm; }
+  .rpt-loja-block{ page-break-before:always; break-before:page; margin-bottom:0; }
+  .rpt-loja-block:first-of-type{ page-break-before:auto; break-before:auto; }
+  .rpt-loja-block h3{ page-break-after:avoid; break-after:avoid; }
+  .rpt-resumo-table{ page-break-inside:avoid; break-inside:avoid; }
+  table.rpt-table{ page-break-inside:auto; }
+  table.rpt-table thead{ display:table-header-group; }
+  table.rpt-table tr{ page-break-inside:avoid; break-inside:avoid; }
+  .rpt-loja-pagto{ page-break-inside:avoid; break-inside:avoid; }
+  .rpt-pagto-dash{ page-break-before:always; break-before:page; page-break-inside:avoid; break-inside:avoid; }
+}
+.rpt-head{
+  margin-bottom:16px;padding:14px 16px;border-radius:8px;
+  background:linear-gradient(120deg,#1c1f23,#2c3540 60%,var(--accent));color:#fff;
+}
+.rpt-head h1{font-size:18px;margin:0 0 3px;letter-spacing:-.2px;}
+.rpt-head .rpt-meta{font-size:11.5px;color:#dfe3e8;}
+.rpt-resumo-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:20px;}
+.rpt-resumo-table th{text-align:left;background:#2c3540;color:#fff;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:.04em;}
+.rpt-resumo-table th.num, .rpt-resumo-table td.num{text-align:right;}
+.rpt-resumo-table td{padding:5px 8px;border-bottom:1px solid #e3e0d8;}
+.rpt-resumo-table tbody tr:nth-child(even){background:#f6f4ef;}
+.rpt-resumo-table tfoot td{font-weight:800;border-top:2px solid #1c1f23;background:#fbe6cf;color:#7a3d0c;}
+.rpt-loja-block{margin-bottom:22px;page-break-inside:avoid;}
+.rpt-loja-block h3{
+  font-size:13px;margin:0 0 0;padding:7px 10px;border-radius:6px 6px 0 0;
+  background:var(--accent);color:#fff;display:flex;justify-content:space-between;align-items:center;
+}
+.rpt-loja-block h3 .rpt-loja-total{font-family:var(--mono);font-size:12.5px;}
+table.rpt-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:11px;margin-bottom:0;border:1px solid #e3e0d8;}
+table.rpt-table th{text-align:left;background:#f6f4ef;color:#5b6168;border-bottom:1px solid #d8d4c8;padding:5px 7px;font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;overflow-wrap:break-word;}
+table.rpt-table td{padding:5px 7px;border-bottom:1px solid #ece9e1;vertical-align:top;overflow-wrap:break-word;word-break:break-word;}
+table.rpt-table tbody tr:nth-child(even){background:#fbfaf7;}
+table.rpt-table td.num{text-align:right;font-family:var(--mono);white-space:normal;}
+table.rpt-table th:nth-child(1), table.rpt-table td:nth-child(1){width:15%;}
+table.rpt-table th:nth-child(2), table.rpt-table td:nth-child(2){width:8%;}
+table.rpt-table th:nth-child(3), table.rpt-table td:nth-child(3){width:8%;}
+table.rpt-table th:nth-child(4), table.rpt-table td:nth-child(4){width:21%;}
+table.rpt-table th:nth-child(5), table.rpt-table td:nth-child(5){width:21%;}
+table.rpt-table th:nth-child(6), table.rpt-table td:nth-child(6){width:14%;}
+table.rpt-table th:nth-child(7), table.rpt-table td:nth-child(7){width:13%;}
+.rpt-cargo{font-size:9.5px;color:#888;}
+.rpt-item-line{font-size:10.5px;white-space:normal;line-height:1.5;word-break:break-word;}
+.rpt-item-line b{color:var(--bad);}
+.rpt-item-line.is-provento b{color:var(--good);}
+.rpt-dash{color:#999;}
+.rpt-pagto{font-size:10px;white-space:normal;}
+.rpt-pagto.is-Banco{color:#2e4f8c;font-weight:700;}
+.rpt-pagto.is-Dinheiro{color:#2f7a4f;font-weight:700;}
+.rpt-pagto.is-Caju{color:#9c4a16;font-weight:700;}
+.rpt-subtotal td{font-weight:800;background:#eef1ed;border-top:1.5px solid #2f7a4f;border-bottom:1.5px solid #2f7a4f;}
+.rpt-loja-pagto{
+  display:flex;gap:8px;padding:8px 10px;background:#faf9f6;border:1px solid #e3e0d8;border-top:none;
+  border-radius:0 0 6px 6px;
+}
+.rpt-loja-chip{
+  flex:1;display:flex;align-items:center;gap:6px;padding:5px 9px;border-radius:6px;font-size:10.5px;font-weight:700;
+}
+.rpt-loja-chip.is-Banco{background:#e3ecfb;color:#1e3f7a;}
+.rpt-loja-chip.is-Dinheiro{background:#e1f3e6;color:#1f5c39;}
+.rpt-loja-chip.is-Caju{background:#fde6d2;color:#8a4710;}
+.rpt-loja-chip .val{margin-left:auto;font-family:var(--mono);}
+.rpt-grand{
+  margin-top:12px;border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;
+  background:#1c1f23;color:#fff;
+}
+.rpt-grand .val{font-size:18px;font-weight:800;color:#ffd9a8;}
+.rpt-pagto-dash{margin-top:18px;page-break-inside:avoid;}
+.rpt-pagto-dash h3{font-size:13px;margin:0 0 10px;color:#1c1f23;border-bottom:2px solid var(--accent);padding-bottom:5px;display:inline-block;}
+.rpt-pagto-cards{display:flex;gap:14px;}
+.rpt-pagto-card{
+  flex:1;border-radius:9px;padding:14px 12px;text-align:center;color:#fff;
+}
+.rpt-pagto-card.is-Banco{background:linear-gradient(150deg,#2e4f8c,#1e3f7a);}
+.rpt-pagto-card.is-Dinheiro{background:linear-gradient(150deg,#2f7a4f,#1f5c39);}
+.rpt-pagto-card.is-Caju{background:linear-gradient(150deg,#c97a2e,#9c4a16);}
+.rpt-pagto-icon{font-size:20px;}
+.rpt-pagto-label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-top:3px;font-weight:700;opacity:.9;}
+.rpt-pagto-value{font-family:var(--mono);font-size:17px;font-weight:800;margin-top:5px;}
+.rpt-pagto-pct{font-size:10px;margin-top:3px;opacity:.85;}
+
+@media (max-width: 860px){
+  .app-shell{grid-template-columns:1fr;grid-template-rows:56px auto 1fr;}
+  .sidebar{flex-direction:row;overflow-x:auto;}
+  .side-list{display:flex;flex-direction:row;flex:none;}
+  .side-section-label{display:none;}
+  .topbar{flex-wrap:wrap;height:auto;padding:8px 12px;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="printArea"></div>
+<div class="toast-wrap" id="toastWrap"></div>
+<script>
+window.SEED_FUNCIONARIOS = [{"id":"f001","codigo":"000082","nome":"ABEL SILVA MATOS","cargo":"DIRETOR","empresa":"Contractus","loja":"Administração/Sócios","admissao":"01/05/2021","salarioContratual":3242,"salarioBaseMes":3242,"proventosExtras":[],"descontosExtras":[{"id":"d0011","descricao":"INSS 11%","valor":356.62}],"observacao":"","ativo":true},{"id":"f002","codigo":"000250","nome":"ABIMAEL MOREIRA DA SILVA","cargo":"AUXILIAR MECANICO","empresa":"Contractus","loja":"BR-116","admissao":"01/04/2026","salarioContratual":1769.57,"salarioBaseMes":655.94,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":-228.85,"valorLiquido":655.94,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f003","codigo":"000121","nome":"ADRIANO FERREIRA SPINOSA","cargo":"ESTOQUISTA","empresa":"Contractus","loja":"Heráclito Graça","admissao":"01/11/2022","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f004","codigo":"000143","nome":"ALEXIA SILVA BRITO SAMPAIO DE CRISTO","cargo":"ANALISTA FINANCEIRO","empresa":"Contractus","loja":"Administração/Sócios","admissao":"21/06/2023","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f005","codigo":"000067","nome":"ALLYSSON MIKAEL DE MORAIS CARNEIRO","cargo":"CONSULTOR TECNICO AUTOMOTIVO","empresa":"Contractus","loja":"Heráclito Graça","admissao":"21/10/2020","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f006","codigo":"000149","nome":"ANTONIO EDER PINHO DA SILVA","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"Maraponga","admissao":"08/08/2023","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f007","codigo":"000075","nome":"ANTONIO GLEISTON DE OLIVEIRA NERES","cargo":"MECANICO","empresa":"Contractus","loja":"Kennedy","admissao":"01/02/2021","salarioContratual":1769.57,"salarioBaseMes":598.98,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":-285.81,"valorLiquido":598.98,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f008","codigo":"000231","nome":"ANTONIO GUILHERME SETUBAL DE MEDEIROS","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"Aguanambi","admissao":"01/08/2025","salarioContratual":1769.57,"salarioBaseMes":1769.57,"proventosExtras":[],"descontosExtras":[{"id":"d0081","descricao":"Adiantamento Compensação","valor":884.79},{"id":"d0082","descricao":"INSS 9%","valor":134.94}],"observacao":"","ativo":true},{"id":"f009","codigo":"000153","nome":"ARLEN LORRAN MOURA MACHADO","cargo":"GERENTE DE VENDAS","empresa":"Contractus","loja":"Antônio Bezerra","admissao":"26/10/2023","salarioContratual":1769.57,"salarioBaseMes":616.05,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":-268.74,"valorLiquido":616.05,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f010","codigo":"000137","nome":"ARTHUR AGOSTINHO ALMEIDA","cargo":"CONSULTOR TECNICO AUTOMOTIVO","empresa":"Contractus","loja":"Antônio Bezerra","admissao":"01/06/2023","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f011","codigo":"000116","nome":"AUDENE FERNANDES VERAS","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"Kennedy","admissao":"08/07/2022","salarioContratual":1769.57,"salarioBaseMes":1769.57,"proventosExtras":[],"descontosExtras":[{"id":"d0111","descricao":"Adiantamento Compensação","valor":884.79},{"id":"d0112","descricao":"INSS 9%","valor":134.94},{"id":"d0113","descricao":"Taxa Negocial Assistencial","valor":14.74}],"observacao":"","ativo":true},{"id":"f012","codigo":"000206","nome":"CARLOS GABRIEL GALDINO DE SOUZA","cargo":"TECNICO DE LUBRIFICAÇÃO","empresa":"Contractus","loja":"Maraponga","admissao":"18/11/2024","salarioContratual":1769.57,"salarioBaseMes":650.55,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":-234.24,"valorLiquido":650.55,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f013","codigo":"000238","nome":"CARLOS RHUAN NASCIMENTO DE CASTRO","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"Aguanambi","admissao":"01/11/2025","salarioContratual":1769.57,"salarioBaseMes":699.04,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":-185.75,"valorLiquido":699.04,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f014","codigo":"000070","nome":"CARLOS WAGNER MOTA E SILVA","cargo":"MECANICO","empresa":"Contractus","loja":"Heráclito Graça","admissao":"19/11/2020","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f015","codigo":"000026","nome":"CHARLES ROBSON LIMA DE OLIVEIRA","cargo":"GERENTE COMERCIAL","empresa":"Contractus","loja":"Heráclito Graça","admissao":"22/01/2019","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f016","codigo":"000009","nome":"CICERO EVERTON VIEIRA DINIZ","cargo":"ALINHADOR AUTOMOTIVO","empresa":"Contractus","loja":"Maraponga","admissao":"05/07/2018","salarioContratual":1769.57,"salarioBaseMes":1769.57,"proventosExtras":[],"descontosExtras":[{"id":"d0161","descricao":"Adiantamento Compensação","valor":884.79},{"id":"d0162","descricao":"INSS 9%","valor":134.94},{"id":"d0163","descricao":"Plano Odonto Titular","valor":16.43}],"observacao":"","ativo":true},{"id":"f017","codigo":"000180","nome":"CLYSTENS SOUSA DA SILVA","cargo":"MECANICO AUTOMOTIVO","empresa":"Contractus","loja":"Heráclito Graça","admissao":"02/05/2024","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f018","codigo":"000219","nome":"DANIEL DAVID PEREIRA LOPES","cargo":"MECANICO","empresa":"Contractus","loja":"Heráclito Graça","admissao":"20/03/2025","salarioContratual":1769.57,"salarioBaseMes":600.53,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":-284.26,"valorLiquido":600.53,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f019","codigo":"000247","nome":"DARIANO ALVES DA SILVA","cargo":"MOTOQUEIRO","empresa":"Contractus","loja":"Heráclito Graça","admissao":"05/02/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f020","codigo":"000084","nome":"EDMAR DE OLIVEIRA SILVA","cargo":"MECANICO","empresa":"Contractus","loja":"Maracanaú","admissao":"28/06/2021","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f021","codigo":"000072","nome":"EDSON ALVES DA SILVA","cargo":"ALINHADOR AUTOMOTIVO","empresa":"Contractus","loja":"Kennedy","admissao":"27/11/2020","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f022","codigo":"000240","nome":"EDUARDO HENRIQUE DE SOUSA AGUIAR","cargo":"MOTOBOY","empresa":"Contractus","loja":"Jovita","admissao":"19/11/2025","salarioContratual":1769.57,"salarioBaseMes":1769.57,"proventosExtras":[{"id":"p0221","descricao":"Adicional de Periculosidade 30%","valor":530.87},{"id":"p0222","descricao":"Líquido Negativo","valor":26.96},{"id":"p0223","descricao":"Provisão Cred. Trab.- Provento","valor":330.88}],"descontosExtras":[{"id":"d0221","descricao":"Consignado Crédito Trabalhador 2/12","valor":474.91},{"id":"d0222","descricao":"Consignado Crédito Trabalhador 2/12","valor":104.31},{"id":"d0223","descricao":"Consignado Crédito Trabalhador 2/9","valor":82.54},{"id":"d0224","descricao":"Adiantamento Compensação","valor":884.79},{"id":"d0225","descricao":"INSS 9%","valor":182.71},{"id":"d0226","descricao":"Líquido Negativo Compensação","valor":914.28},{"id":"d0227","descricao":"Taxa Negocial Assistencial","valor":14.74}],"observacao":"","ativo":true},{"id":"f023","codigo":"000117","nome":"EVANDRO COSTA DE SOUSA","cargo":"GERENTE DE VENDAS","empresa":"Contractus","loja":"Caucaia","admissao":"12/07/2022","salarioContratual":1769.57,"salarioBaseMes":1769.57,"proventosExtras":[{"id":"p0231","descricao":"Salário-Família 2 cota(s)","valor":135.08}],"descontosExtras":[{"id":"d0231","descricao":"Adiantamento Compensação","valor":884.79},{"id":"d0232","descricao":"INSS 9%","valor":134.94},{"id":"d0233","descricao":"Taxa Negocial Assistencial","valor":14.74}],"observacao":"","ativo":true},{"id":"f024","codigo":"000249","nome":"FELIPE DE BRITO ARAUJO","cargo":"DIRETOR","empresa":"Contractus","loja":"Administração/Sócios","admissao":"01/03/2026","salarioContratual":3242,"salarioBaseMes":3242,"proventosExtras":[],"descontosExtras":[{"id":"d0241","descricao":"INSS 11%","valor":356.62}],"observacao":"","ativo":true},{"id":"f025","codigo":"000195","nome":"FLAVIO HENRIQUE DE SOUSA RIBEIRO","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"Aguanambi","admissao":"06/09/2024","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f026","codigo":"000138","nome":"FRANCISCO ANTONIO MONTEIRO DA SILVA","cargo":"CONSULTOR TECNICO AUTOMOTIVO","empresa":"Contractus","loja":"BR-116","admissao":"07/06/2023","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f027","codigo":"000257","nome":"FRANCISCO BRUNO RIBEIRO DO NASCIMENTO","cargo":"ALINHADOR","empresa":"Contractus","loja":"Papicu","admissao":"16/06/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f028","codigo":"000050","nome":"FRANCISCO CARLOS BENTO CRUZ","cargo":"AUX SERVICOS GERAIS","empresa":"Contractus","loja":"Heráclito Graça","admissao":"07/10/2019","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f029","codigo":"000165","nome":"FRANCISCO DEJACIR ANASTACIO DE SOUSA","cargo":"ALINHADOR","empresa":"Contractus","loja":"Jovita","admissao":"20/02/2024","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f030","codigo":"000146","nome":"FRANCISCO EDUARDO DA SILVA","cargo":"MECANICO","empresa":"Contractus","loja":"Aguanambi","admissao":"21/07/2023","salarioContratual":1769.57,"salarioBaseMes":1769.57,"proventosExtras":[{"id":"p0301","descricao":"Salário-Família 1 cota(s)","valor":67.54}],"descontosExtras":[{"id":"d0301","descricao":"Adiantamento Compensação","valor":884.79},{"id":"d0302","descricao":"INSS 9%","valor":134.94},{"id":"d0303","descricao":"Taxa Negocial Assistencial","valor":14.74}],"observacao":"","ativo":true},{"id":"f031","codigo":"000259","nome":"FRANCISCO LUCAS VIANA SALES","cargo":"AUX. MECÂNICO","empresa":"Contractus","loja":"Antônio Bezerra","admissao":"19/06/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f032","codigo":"000224","nome":"FRANCISCO ROMULO PEREIRA TAVARES","cargo":"ANALISTA FINANCEIRO FISCAL","empresa":"Contractus","loja":"Administração/Sócios","admissao":"19/05/2025","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f033","codigo":"000192","nome":"GABRIEL FERNANDES LIMA","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"Jovita","admissao":"20/08/2024","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f034","codigo":"000220","nome":"GABRIEL LEVY DOS SANTOS MOREIRA","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"Caucaia","admissao":"21/03/2025","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f035","codigo":"000214","nome":"GABRIEL LIMA MATOS","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"Maraponga","admissao":"10/02/2025","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f036","codigo":"000254","nome":"GERARDO LUCAS PEREIRA DE FREITAS","cargo":"AUXILIAR DE ALINHADOR","empresa":"Contractus","loja":"Papicu","admissao":"11/05/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f037","codigo":"000237","nome":"GILMAR RODRIGUES DO NASCIMENTO","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"Maraponga","admissao":"16/10/2025","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f038","codigo":"000253","nome":"GLEIDSON SERAFIM CASTRO NASCIMENTO","cargo":"MECANICO AUTOMOTIVO","empresa":"Contractus","loja":"Heráclito Graça","admissao":"24/04/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f039","codigo":"000233","nome":"HELIO ANDERSON DA SILVA","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"A Definir","admissao":"16/09/2025","salarioContratual":1769.57,"salarioBaseMes":1769.57,"proventosExtras":[{"id":"p0391","descricao":"Salário-Família 1 cota(s)","valor":67.54}],"descontosExtras":[{"id":"d0391","descricao":"Adiantamento Compensação","valor":884.79},{"id":"d0392","descricao":"INSS 9%","valor":134.94},{"id":"d0393","descricao":"Taxa Negocial Assistencial","valor":14.74}],"observacao":"","ativo":true},{"id":"f040","codigo":"000218","nome":"HIAGO MARTINS DA SILVA","cargo":"AUX. MECÂNICO","empresa":"Contractus","loja":"Heráclito Graça","admissao":"06/03/2025","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f041","codigo":"000209","nome":"ISRAEL DE SOUSA SILVA","cargo":"CONSULTOR TECNICO AUTOMOTIVO","empresa":"Contractus","loja":"BR-116","admissao":"10/12/2024","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f042","codigo":"000197","nome":"JACKSON SOARES DE PAIVA","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"Papicu","admissao":"20/09/2024","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f043","codigo":"000226","nome":"JEAN GLEDSON OLIVEIRA DA SILVEIRA","cargo":"GERENTE OPERACIONAL","empresa":"Contractus","loja":"BR-116","admissao":"23/05/2025","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f044","codigo":"000245","nome":"JEFFERSON JAMESON DE LIMA NASCIMENTO","cargo":"LAVADOR DE VEICULOS","empresa":"Contractus","loja":"Heráclito Graça","admissao":"16/12/2025","salarioContratual":1769.57,"salarioBaseMes":698.64,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":-186.15,"valorLiquido":698.64,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f045","codigo":"000207","nome":"JOAO DA SILVA LOPES","cargo":"MECANICO","empresa":"Contractus","loja":"Heráclito Graça","admissao":"19/11/2024","salarioContratual":1769.57,"salarioBaseMes":615.95,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":-268.84,"valorLiquido":615.95,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f046","codigo":"000037","nome":"JOAO PAULO LOPES BARBOSA","cargo":"MECANICO","empresa":"Contractus","loja":"Papicu","admissao":"16/07/2019","salarioContratual":1769.57,"salarioBaseMes":1769.57,"proventosExtras":[],"descontosExtras":[{"id":"d0461","descricao":"Adiantamento Compensação","valor":884.79},{"id":"d0462","descricao":"INSS 9%","valor":134.94}],"observacao":"","ativo":true},{"id":"f047","codigo":"000154","nome":"JOEL DE SOUZA TABOSA","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"Aguanambi","admissao":"01/11/2023","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f048","codigo":"000227","nome":"JOHN CLAUDEMBERGSON TEIXEIRA DE AQUINO","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"Maracanaú","admissao":"10/06/2025","salarioContratual":1769.57,"salarioBaseMes":598.98,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":-285.81,"valorLiquido":598.98,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f049","codigo":"000049","nome":"JOSE ALISSON VIEIRA DINIZ","cargo":"GERENTE COMERCIAL","empresa":"Contractus","loja":"Maracanaú","admissao":"02/09/2019","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f050","codigo":"000132","nome":"JOSE CLAZIO DE FREITAS","cargo":"ALINHADOR","empresa":"Contractus","loja":"Maracanaú","admissao":"27/03/2023","salarioContratual":1769.57,"salarioBaseMes":779.78,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":-105.01,"valorLiquido":779.78,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f051","codigo":"000255","nome":"JOSE FRANCISCO COSTA SOUSA","cargo":"AUXILIAR DE ALINHADOR","empresa":"Contractus","loja":"A Definir","admissao":"11/05/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f052","codigo":"000089","nome":"JOSE GERARDO DE FREITAS","cargo":"CONSULTOR DE VENDAS","empresa":"Contractus","loja":"BR-116","admissao":"09/08/2021","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f053","codigo":"000212","nome":"JOSE HELDER DO NASCIMENTO DA SILVA","cargo":"MECANICO","empresa":"Contractus","loja":"Heráclito Graça","admissao":"21/01/2025","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f054","codigo":"000198","nome":"JOSE IRAN DA COSTA BATISTA","cargo":"MECANICO","empresa":"Contractus","loja":"Papicu","admissao":"09/10/2024","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f055","codigo":"000256","nome":"JOSE VICTOR DA SILVA ANDRADE","cargo":"AUXILIAR DE ALINHADOR","empresa":"Contractus","loja":"A Definir","admissao":"11/05/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f056","codigo":"000201","nome":"LIVIA MARIA CANUTO PINHEIRO","cargo":"COORDENADOR(A) DE RECURSOS HUMANOS","empresa":"Contractus","loja":"Administração/Sócios","admissao":"01/11/2024","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f057","codigo":"000184","nome":"LUIZ ANTONIO MARTINS ROCHA","cargo":"CONSULTOR DE VENDAS","empresa":"Contractus","loja":"Heráclito Graça","admissao":"20/05/2024","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f058","codigo":"000243","nome":"MACIEL DOS SANTOS ALVES","cargo":"Aux. Manutenção Predial","empresa":"Contractus","loja":"Administração/Sócios","admissao":"08/12/2025","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f059","codigo":"000063","nome":"MANOEL NERI DA SILVA FILHO","cargo":"ALINHADOR","empresa":"Contractus","loja":"Aguanambi","admissao":"17/09/2020","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f060","codigo":"000096","nome":"MATEUS SILVA BEZERRA","cargo":"ALINHADOR AUTOMOTIVO","empresa":"Contractus","loja":"Kennedy","admissao":"19/10/2021","salarioContratual":1769.57,"salarioBaseMes":669.6,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":-215.19,"valorLiquido":669.6,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f061","codigo":"000235","nome":"MAYCONN DOUGLAS ARRUDA DA SILVA","cargo":"MECANICO","empresa":"Contractus","loja":"BR-116","admissao":"16/09/2025","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f062","codigo":"000088","nome":"MICHAEL AGUIAR AMORIM","cargo":"GERENTE DE VENDAS","empresa":"Contractus","loja":"Papicu","admissao":"28/07/2021","salarioContratual":1769.57,"salarioBaseMes":1769.57,"proventosExtras":[],"descontosExtras":[{"id":"d0621","descricao":"Adiantamento Compensação","valor":884.79},{"id":"d0622","descricao":"INSS 9%","valor":134.94},{"id":"d0623","descricao":"Taxa Negocial Assistencial","valor":14.74}],"observacao":"Licença por motivo de doença (15/06/2026 a 29/06/2026)","ativo":true},{"id":"f063","codigo":"000258","nome":"NATALIA REGIA SAMPAIO FREITAS","cargo":"COPEIRA","empresa":"Contractus","loja":"Heráclito Graça","admissao":"16/06/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f064","codigo":"000129","nome":"PAULO JOSE DA SILVA BARBOSA","cargo":"GERENTE OPERACIONAL","empresa":"Contractus","loja":"Jovita","admissao":"01/03/2023","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f065","codigo":"000252","nome":"RAMON ESTEVAO MOREIRA","cargo":"MOTOQUEIRO","empresa":"Contractus","loja":"Antônio Bezerra","admissao":"01/04/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f066","codigo":"000174","nome":"REGIS JUNIO LIMA DOS SANTOS","cargo":"AUXILIAR DE ALINHADOR","empresa":"Contractus","loja":"BR-116","admissao":"18/03/2024","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f067","codigo":"000010","nome":"RICARDO GOMES CALACIO","cargo":"GERENTE OPERACIONAL","empresa":"Contractus","loja":"Kennedy","admissao":"05/07/2018","salarioContratual":1769.57,"salarioBaseMes":1769.57,"proventosExtras":[{"id":"p0671","descricao":"Provisão Cred. Trab.- Provento","valor":268.49}],"descontosExtras":[{"id":"d0671","descricao":"Consignado Crédito Trabalhador 7/12","valor":397.98},{"id":"d0672","descricao":"Consignado Crédito Trabalhador 2/24","valor":138.99},{"id":"d0673","descricao":"Adiantamento Compensação","valor":884.79},{"id":"d0674","descricao":"INSS 9%","valor":134.94},{"id":"d0675","descricao":"Taxa Negocial Assistencial","valor":14.74},{"id":"d0676","descricao":"Plano Odonto Dependente","valor":65.72},{"id":"d0677","descricao":"Plano Odonto Titular","valor":16.43}],"observacao":"","ativo":true},{"id":"f068","codigo":"000199","nome":"ROBSON BRITO DOS SANTOS LIMA","cargo":"AUXILIAR DE ALINHADOR","empresa":"Contractus","loja":"Caucaia","admissao":"09/10/2024","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f069","codigo":"000167","nome":"ROMULO GALDINO CUNHA","cargo":"AUXILIAR DE ALINHADOR","empresa":"Contractus","loja":"Heráclito Graça","admissao":"20/02/2024","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f070","codigo":"000118","nome":"SAMUEL ANDERSON HOLANDA MOTA","cargo":"MECANICO","empresa":"Contractus","loja":"BR-116","admissao":"17/08/2022","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f071","codigo":"000175","nome":"SAMUEL SILVA PINTO","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"Kennedy","admissao":"18/03/2024","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f072","codigo":"000055","nome":"VALDIR PAULO ALVES","cargo":"Aux. Manutenção Predial","empresa":"Contractus","loja":"Administração/Sócios","admissao":"10/01/2020","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f073","codigo":"000141","nome":"JOELMY MAX DA SILVA DE MELO","cargo":"GERENTE OPERACIONAL","empresa":"BM Comércio","loja":"Mister Hull","admissao":"05/08/2019","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f074","codigo":"000128","nome":"LUCILEIDE DE FREITAS SPINOSA","cargo":"SERVICOS GERAIS","empresa":"BM Comércio","loja":"Mister Hull","admissao":"01/04/2014","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f075","codigo":"000075","nome":"AILA FERREIRA DE OLIVEIRA","cargo":"AUX.SERVICOS GERAIS","empresa":"BM Comércio","loja":"A Definir","admissao":"01/10/2010","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f076","codigo":"000038","nome":"FRANCISCO AIRTON FROTA DO NASCIMENTO","cargo":"MECANICO","empresa":"BM Comércio","loja":"Heráclito Graça","admissao":"02/01/2007","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f077","codigo":"000036","nome":"FRANCISCO PINHEIRO SOARES","cargo":"MECANICO","empresa":"BM Comércio","loja":"Heráclito Graça","admissao":"02/01/2007","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f078","codigo":"000014","nome":"RAIMUNDO GILBRAN PEIXOTO DE ALENCAR FILHO","cargo":"ALINHADOR AUTOMOTIVO","empresa":"BM Comércio","loja":"Heráclito Graça","admissao":"01/11/2004","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f079","codigo":"000142","nome":"THIAGO MONTENEGRO BRAGA BARROSO","cargo":"DIRETOR ADMINISTRATIVO","empresa":"BM Comércio","loja":"Administração/Sócios","admissao":"01/06/2020","salarioContratual":3242,"salarioBaseMes":3242,"proventosExtras":[],"descontosExtras":[{"id":"d0791","descricao":"INSS 11%","valor":356.62}],"observacao":"","ativo":true},{"id":"f080","codigo":"000028","nome":"JOAO VIANEI DE SOUZA","cargo":"MONTADOR","empresa":"Mud Scap","loja":"Jovita","admissao":"02/05/1988","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de 08/2026 (dia 15), ainda não o fechamento do mês.","ativo":true,"adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}}},{"id":"f_1quii9znv7n","codigo":"000263","nome":"ANTOIONE PINHEIRO PEREIRA","cargo":"MOTOQUEIRO","empresa":"Contractus","loja":"A Definir","admissao":"10/07/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Cadastro criado a partir do adiantamento de 08/2026 — valor exibido é o líquido do adiantamento (dia 15), ainda não o fechamento do mês.","adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}},"ativo":true},{"id":"f_cld4krwnv7n","codigo":"000260","nome":"ANTONIO MARCOS DE SOUSA","cargo":"MOTOQUEIRO","empresa":"Contractus","loja":"A Definir","admissao":"04/07/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Cadastro criado a partir do adiantamento de 08/2026 — valor exibido é o líquido do adiantamento (dia 15), ainda não o fechamento do mês.","adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}},"ativo":true},{"id":"f_zun3wgfnv7o","codigo":"000266","nome":"BRUNO SALES FIRMINO","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"A Definir","admissao":"23/07/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Cadastro criado a partir do adiantamento de 08/2026 — valor exibido é o líquido do adiantamento (dia 15), ainda não o fechamento do mês.","adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}},"ativo":true},{"id":"f_qwmlotunv7v","codigo":"000261","nome":"JESIGLELBI DA SILVA CIPRIANO","cargo":"MECANICO AUTOMOTIVO","empresa":"Contractus","loja":"A Definir","admissao":"09/07/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Cadastro criado a partir do adiantamento de 08/2026 — valor exibido é o líquido do adiantamento (dia 15), ainda não o fechamento do mês.","adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}},"ativo":true},{"id":"f_r1vhubdnv7v","codigo":"000265","nome":"JOAO ROMARIO LIMA FERREIRA","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"A Definir","admissao":"23/07/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Cadastro criado a partir do adiantamento de 08/2026 — valor exibido é o líquido do adiantamento (dia 15), ainda não o fechamento do mês.","adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}},"ativo":true},{"id":"f_cqtn3rjnv7v","codigo":"000262","nome":"JOSE MAURO DE SOUSA","cargo":"AUX. MECÂNICO","empresa":"Contractus","loja":"A Definir","admissao":"09/07/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Cadastro criado a partir do adiantamento de 08/2026 — valor exibido é o líquido do adiantamento (dia 15), ainda não o fechamento do mês.","adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}},"ativo":true},{"id":"f_c844vynnv7v","codigo":"000264","nome":"KAUA DE SOUZA COUTO","cargo":"PROMOTOR(A)DE VENDAS","empresa":"Contractus","loja":"A Definir","admissao":"10/07/2026","salarioContratual":1769.57,"salarioBaseMes":884.79,"proventosExtras":[],"descontosExtras":[],"observacao":"Cadastro criado a partir do adiantamento de 08/2026 — valor exibido é o líquido do adiantamento (dia 15), ainda não o fechamento do mês.","adiantamentos":{"08/2026":{"valorBruto":884.79,"provisaoValor":0,"valorLiquido":884.79,"referencia":"50%","importadoEm":"12/08/2026 17:43"}},"ativo":true}];
+</script>
+<script>
+/* ===================== CONSTANTES ===================== */
+var STORAGE_KEY = 'estado';
+
+/* ===================== SINCRONIZAÇÃO COM O SERVIDOR =====================
+   Esse app foi feito originalmente usando window.storage.get/set (armazenamento
+   do ambiente onde ele rodava). Para funcionar como um site normal, com os dados
+   salvos automaticamente no servidor (SQLite) em vez de ficarem presos num
+   navegador só, implementamos aqui a mesma interface (get/set por chave),
+   conversando com a API do nosso backend. O restante do app não precisa saber
+   dessa troca — continua chamando window.storage.get/set normalmente. */
+window.storage = {
+  get: function(key, shared){
+    return fetch('/api/state', {credentials:'include'}).then(function(r){
+      if(r.status === 401){ window.location.href = '/login'; return {value:null}; }
+      if(!r.ok) throw new Error('Falha ao carregar do servidor');
+      return r.json();
+    });
+  },
+  set: function(key, value, shared){
+    return fetch('/api/state', {
+      method:'PUT', credentials:'include', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({value:value})
+    }).then(function(r){
+      if(r.status === 401){ window.location.href = '/login'; return false; }
+      return r.ok;
+    });
+  }
+};
+function sairApp(){
+  fetch('/logout', {method:'POST', credentials:'include'}).then(function(){ window.location.href = '/login'; }).catch(function(){ window.location.href = '/login'; });
+}
+var LOJAS_PADRAO = ['Heráclito Graça','Aguanambi','Jovita','BR-116','Maracanaú','Antônio Bezerra','Kennedy','Caucaia','Maraponga','Papicu','Mister Hull','Administração/Sócios','A Definir'];
+var EMPRESAS_PADRAO = ['Contractus','BM Comércio','Mud Scap'];
+var FORMAS_PAGAMENTO_SALARIO = ['Banco','Dinheiro'];
+var FORMAS_PAGAMENTO = ['Banco','Dinheiro','Caju'];
+var CATALOGO_PADRAO = [
+  {chave:'salario-familia', tipo:'provento'},
+  {chave:'salario-base', tipo:'provento'},
+  {chave:'adicional de periculosidade', tipo:'provento'},
+  {chave:'adicional de insalubridade', tipo:'provento'},
+  {chave:'provisao cred', tipo:'provento'},
+  {chave:'pro labore', tipo:'provento'},
+  {chave:'hora extra', tipo:'provento'},
+  {chave:'liquido negativo compensacao', tipo:'desconto'},
+  {chave:'liquido negativo', tipo:'provento'},
+  {chave:'consignado', tipo:'desconto'},
+  {chave:'adiantamento compensacao', tipo:'desconto'},
+  {chave:'inss', tipo:'desconto'},
+  {chave:'irrf', tipo:'desconto'},
+  {chave:'taxa negocial', tipo:'desconto'},
+  {chave:'plano odonto', tipo:'desconto'},
+  {chave:'plano de saude', tipo:'desconto'},
+  {chave:'pensao alimenticia', tipo:'desconto'},
+  {chave:'vale transporte', tipo:'desconto'},
+  {chave:'falta', tipo:'desconto'}
+];
+
+/* ===================== UTILS ===================== */
+function uid(prefix){ return (prefix||'id') + '_' + Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4); }
+function escapeHtml(s){
+  if(s===null||s===undefined) return '';
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function stripAccents(s){ return String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,''); }
+function toNum(v){
+  if(typeof v === 'number') return v;
+  if(!v) return 0;
+  var s = String(v).trim();
+  if(s.indexOf(',') > -1){ s = s.replace(/\./g,'').replace(',','.'); }
+  var n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+function toBRL(n){
+  n = toNum(n);
+  return n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function todayBR(){
+  var d = new Date();
+  function p(x){ return String(x).padStart(2,'0'); }
+  return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+function round2(n){ return Math.round((n + Number.EPSILON) * 100) / 100; }
+function dataBR(iso){
+  if(!iso) return '';
+  var p = iso.split('-');
+  if(p.length !== 3) return iso;
+  return p[2]+'/'+p[1]+'/'+p[0];
+}
+function $(sel, root){ return (root||document).querySelector(sel); }
+function $all(sel, root){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
+function on(root, evt, sel, handler){
+  root.addEventListener(evt, function(e){
+    var t = e.target.closest(sel);
+    if(t && root.contains(t)) handler(e, t);
+  });
+}
+function debounce(fn, ms){
+  var t;
+  return function(){
+    var args = arguments;
+    clearTimeout(t);
+    t = setTimeout(function(){ fn.apply(null, args); }, ms);
+  };
+}
+
+var STOPWORDS = {DA:1,DE:1,DO:1,DOS:1,DAS:1,E:1};
+var SKIP_TOKENS = {CT:1,HG:1,AG:1,MT:1,PR:1,PP:1,MH:1,AB:1,BR:1,KN:1,CC:1,MP:1,JV:1,MC:1,ESPECIE:1};
+function normName(s){
+  var t = stripAccents(s||'').toUpperCase().replace(/[^A-Z\s]/g,' ');
+  var toks = t.split(/\s+/).filter(Boolean);
+  var out = [];
+  for(var i=0;i<toks.length;i++){
+    var w = toks[i];
+    if(w === 'FCO' || w === 'FRC') w = 'FRANCISCO';
+    if(STOPWORDS[w] || SKIP_TOKENS[w] || w.length<=1) continue;
+    out.push(w);
+  }
+  return out;
+}
+function nameScore(a, b){
+  var aset = {}, bset = {}, i;
+  for(i=0;i<a.length;i++) aset[a[i]]=1;
+  for(i=0;i<b.length;i++) bset[b[i]]=1;
+  var ak = Object.keys(aset), bk = Object.keys(bset);
+  if(!ak.length || !bk.length) return 0;
+  var inter = 0;
+  for(i=0;i<ak.length;i++) if(bset[ak[i]]) inter++;
+  var first = (a[0] && b[0] && a[0]===b[0]) ? 1 : 0;
+  return (2*inter/(ak.length+bk.length)) + first*0.3;
+}
+
+/* ===================== ESTADO ===================== */
+var state = null;
+var ui = {
+  view: {type:'dashboard'},
+  search: '',
+  importStaging: null,
+  unsaved: false
+};
+
+function defaultState(){
+  return {
+    competencia: '08/2026',
+    lojas: LOJAS_PADRAO.slice(),
+    empresas: EMPRESAS_PADRAO.slice(),
+    catalogo: CATALOGO_PADRAO.slice(),
+    funcionarios: (window.SEED_FUNCIONARIOS || []).map(function(f){
+      return Object.assign({}, f, {
+        formaPagamento: FORMAS_PAGAMENTO_SALARIO.indexOf(f.formaPagamento) > -1 ? f.formaPagamento : 'Banco',
+        valeAlimentacao: toNum(f.valeAlimentacao) || 0,
+        valeTransporte: toNum(f.valeTransporte) || 0,
+        proventosExtras: (f.proventosExtras||[]).map(function(p){ return Object.assign({},p); }),
+        descontosExtras: (f.descontosExtras||[]).map(function(p){ return Object.assign({},p); }),
+        rateioLojas: (f.rateioLojas||[]).map(function(r){ return Object.assign({},r); }),
+        adiantamentos: Object.assign({}, f.adiantamentos||{})
+      });
+    }),
+    historico: {},
+    // Data de pagamento efetiva de cada competência, por tipo: { 'MM/AAAA': {completa: 'YYYY-MM-DD', adiantamento: 'YYYY-MM-DD'} }.
+    // Perguntado ao confirmar cada importação, pois a folha costuma ser fechada
+    // alguns dias antes do pagamento de verdade.
+    datasPagamento: {},
+    lastSaved: null
+  };
+}
+
+function calcLiquido(f){
+  var p = (f.proventosExtras||[]).reduce(function(s,x){ return s+toNum(x.valor); }, 0);
+  var d = (f.descontosExtras||[]).reduce(function(s,x){ return s+toNum(x.valor); }, 0);
+  return round2(toNum(f.salarioBaseMes) + p - d);
+}
+function totalProventosExtras(f){ return (f.proventosExtras||[]).reduce(function(s,x){return s+toNum(x.valor);},0); }
+function totalDescontosExtras(f){ return (f.descontosExtras||[]).reduce(function(s,x){return s+toNum(x.valor);},0); }
+function totalCaju(f){ return round2(toNum(f.valeAlimentacao) + toNum(f.valeTransporte)); }
+function calcTotalPagar(f){ return round2(calcLiquido(f) + totalCaju(f)); }
+
+function funcionariosPorLoja(loja){
+  return state.funcionarios.filter(function(f){ return f.loja === loja && f.ativo !== false; });
+}
+/* Retorna como o custo total de um funcionário se distribui entre lojas.
+   Se o funcionário tiver rateioLojas configurado (percentuais que somam ~100%):
+     - o LÍQUIDO do salário (Banco/Dinheiro) é dividido proporcionalmente entre as lojas do rateio;
+     - o Vale Alimentação/Transporte (Caju) NÃO é dividido — o valor cheio é atribuído a
+       CADA loja do rateio, porque é o valor que de fato é cadastrado para pagamento em
+       cada unidade (não uma fração dele).
+   Caso contrário (sem rateio), 100% do valor (líquido + Caju) é atribuído à loja cadastrada (f.loja). */
+function custoRateado(f){
+  var liquido = calcLiquido(f);
+  var caju = totalCaju(f);
+  var rateio = (f.rateioLojas||[]).filter(function(r){ return r.loja && toNum(r.percentual) > 0; });
+  if(rateio.length){
+    var somaPerc = rateio.reduce(function(s,r){ return s + toNum(r.percentual); }, 0);
+    if(somaPerc > 0){
+      return rateio.map(function(r){
+        var liquidoParte = round2(liquido * (toNum(r.percentual)/somaPerc));
+        return {loja: r.loja, percentual: toNum(r.percentual), valor: round2(liquidoParte + caju), valorLiquido: liquidoParte, valorCaju: caju};
+      });
+    }
+  }
+  return [{loja: f.loja, percentual: 100, valor: round2(liquido+caju), valorLiquido: liquido, valorCaju: caju}];
+}
+function totalLoja(loja){
+
+  return state.funcionarios.filter(function(f){ return f.ativo !== false; }).reduce(function(s,f){
+    var partes = custoRateado(f);
+    var parte = partes.find(function(p){ return p.loja === loja; });
+    return s + (parte ? parte.valor : 0);
+  }, 0);
+}
+/* Lista, para uma loja, TODOS os funcionários com alguma parte do custo atribuída
+   a ela — os que têm essa loja como loja cadastrada (sem rateio, 100%) E os que
+   vêm de outra loja mas têm uma fatia rateada para cá. É essa lista (e não
+   funcionariosPorLoja, que só olha a loja cadastrada) que deve ser usada em
+   relatórios/telas por loja, para que funcionários com rateio apareçam. */
+function funcionariosEfetivosNaLoja(loja){
+  var out = [];
+  state.funcionarios.forEach(function(f){
+    if(f.ativo === false) return;
+    var partes = custoRateado(f);
+    var parte = partes.find(function(p){ return p.loja === loja; });
+    if(!parte) return;
+    out.push({
+      f: f,
+      valorLoja: parte.valor,
+      percentualLoja: parte.percentual,
+      temRateio: !!(f.rateioLojas && f.rateioLojas.filter(function(r){return r.loja && toNum(r.percentual)>0;}).length),
+      externo: (f.loja !== loja)
+    });
+  });
+  out.sort(function(a,b){ return a.f.nome.localeCompare(b.f.nome,'pt-BR'); });
+  return out;
+}
+function totalGeral(){
+  return state.funcionarios.filter(function(f){return f.ativo!==false;}).reduce(function(s,f){ return s + calcTotalPagar(f); }, 0);
+}
+function totaisPorFormaPagamento(lista){
+  var out = {Banco:0, Dinheiro:0, Caju:0};
+  lista.forEach(function(f){
+    var fp = FORMAS_PAGAMENTO_SALARIO.indexOf(f.formaPagamento) > -1 ? f.formaPagamento : 'Banco';
+    out[fp] = (out[fp]||0) + calcLiquido(f);
+    out.Caju = (out.Caju||0) + totalCaju(f);
+  });
+  return out;
+}
+/* Igual a totaisPorFormaPagamento, mas trabalha sobre entries de
+   funcionariosEfetivosNaLoja(), escalando cada valor pela fração (%) que
+   pertence àquela loja — evita somar 2x quem tem rateio em mais de uma loja. */
+function totaisPorFormaPagamentoLoja(entries){
+  var out = {Banco:0, Dinheiro:0, Caju:0};
+  entries.forEach(function(e){
+    var f = e.f;
+    var frac = toNum(e.percentualLoja) / 100;
+    var fp = FORMAS_PAGAMENTO_SALARIO.indexOf(f.formaPagamento) > -1 ? f.formaPagamento : 'Banco';
+    // Arredonda o líquido normalmente, mas o Caju é a DIFERENÇA entre o total já
+    // arredondado desta parte (e.valorLoja, vindo de custoRateado) e o líquido —
+    // assim líquido + Caju sempre bate exatamente com o total exibido no card da
+    // loja, mesmo quando a fração de rateio gera restos de centavos.
+    var liquidoShare = round2(calcLiquido(f) * frac);
+    var cajuShare = round2((e.valorLoja !== undefined ? e.valorLoja : round2(calcTotalPagar(f) * frac)) - liquidoShare);
+    out[fp] = (out[fp]||0) + liquidoShare;
+    out.Caju = (out.Caju||0) + cajuShare;
+  });
+  return out;
+}
+function migrarFuncionario(f){
+  if(FORMAS_PAGAMENTO_SALARIO.indexOf(f.formaPagamento) === -1) f.formaPagamento = 'Banco';
+  if(f.valeAlimentacao === undefined || f.valeAlimentacao === null) f.valeAlimentacao = 0;
+  if(f.valeTransporte === undefined || f.valeTransporte === null) f.valeTransporte = 0;
+  f.valeAlimentacao = toNum(f.valeAlimentacao);
+  f.valeTransporte = toNum(f.valeTransporte);
+  if(!Array.isArray(f.rateioLojas)) f.rateioLojas = [];
+  if(!f.adiantamentos || typeof f.adiantamentos !== 'object') f.adiantamentos = {};
+}
+
+/* ===================== PERSISTÊNCIA ===================== */
+var storageUnavailable = false;
+
+function loadState(cb){
+  // Carregamento defensivo: qualquer falha no armazenamento (chave inexistente,
+  // erro interno do serviço, storage desabilitado, etc.) cai graciosamente nos
+  // dados padrão (folha de Junho/2026) sem travar o app nem assustar o usuário.
+  var finished = false;
+  function fallback(){
+    if(finished) return;
+    finished = true;
+    state = defaultState();
+    cb(true);
+  }
+  try{
+    if(window.storage && typeof window.storage.get === 'function'){
+      window.storage.get(STORAGE_KEY, false).then(function(res){
+        if(finished) return;
+        if(res && res.value){
+          try{
+            var parsed = JSON.parse(res.value);
+            if(parsed && Array.isArray(parsed.funcionarios)){
+              state = parsed;
+              if(!state.lojas) state.lojas = LOJAS_PADRAO.slice();
+              if(!state.empresas) state.empresas = EMPRESAS_PADRAO.slice();
+              if(!state.catalogo) state.catalogo = CATALOGO_PADRAO.slice();
+              if(!state.historico) state.historico = {};
+              if(!state.datasPagamento) state.datasPagamento = {};
+              state.funcionarios.forEach(migrarFuncionario);
+              finished = true;
+              cb(false);
+              return;
+            }
+          }catch(e){ /* JSON inválido: ignora e usa padrão */ }
+        }
+        fallback();
+      }).catch(function(){
+        // Chave ainda não existe (primeiro uso) ou o serviço de armazenamento
+        // está indisponível agora — não é um erro fatal, apenas seguimos com
+        // os dados padrão. O app tenta salvar normalmente nas próximas ações.
+        fallback();
+      });
+      // rede de segurança: se a promessa nunca resolver, não deixa o app preso
+      setTimeout(fallback, 6000);
+    } else {
+      fallback();
+    }
+  }catch(e){
+    fallback();
+  }
+}
+
+function saveState(opts){
+  opts = opts || {};
+  state.lastSaved = new Date().toISOString();
+  var json;
+  try{ json = JSON.stringify(state); }catch(e){ json = null; }
+  function done(ok){
+    ui.unsaved = false;
+    renderSaveIndicator();
+    if(!ok && !storageUnavailable){
+      storageUnavailable = true;
+      if(opts.toast !== false) toast('Não foi possível salvar no armazenamento agora. Use "⬇️ Backup" para guardar uma cópia.', 'bad');
+      return;
+    }
+    if(ok && opts.toast !== false) toast('Dados salvos.', 'good');
+    if(ok) storageUnavailable = false;
+  }
+  if(json && window.storage && typeof window.storage.set === 'function'){
+    try{
+      window.storage.set(STORAGE_KEY, json, false).then(function(r){ done(!!r); }).catch(function(){ done(false); });
+    }catch(e){ done(false); }
+  } else {
+    done(false);
+  }
+}
+var autoSave = debounce(function(){ saveState({toast:false}); }, 900);
+function markDirty(){ ui.unsaved = true; renderSaveIndicator(); autoSave(); }
+
+/* ===================== TOASTS ===================== */
+function toast(msg, kind){
+  var wrap = document.getElementById('toastWrap');
+  var d = document.createElement('div');
+  d.className = 'toast' + (kind ? ' '+kind : '');
+  d.textContent = msg;
+  wrap.appendChild(d);
+  setTimeout(function(){ d.style.opacity='0'; d.style.transition='opacity .3s'; setTimeout(function(){ d.remove(); }, 320); }, 2600);
+}
+/* ===================== EMPRESA BADGE CLASS ===================== */
+function empresaClass(emp){
+  if(emp === 'Contractus') return 'empresa-Contractus';
+  if(emp === 'BM Comércio') return 'empresa-BMComercio';
+  if(emp === 'Mud Scap') return 'empresa-MudScap';
+  return '';
+}
+
+/* ===================== LAYOUT RAIZ ===================== */
+function renderApp(){
+  var app = document.getElementById('app');
+  app.innerHTML =
+    '<div class="app-shell">' +
+      '<div class="topbar" id="topbar"></div>' +
+      '<div class="sidebar" id="sidebar"></div>' +
+      '<div class="main" id="main"></div>' +
+    '</div>';
+  renderTopbar();
+  renderSidebar();
+  renderMain();
+}
+
+function renderSaveIndicator(){
+  var el = document.getElementById('saveIndicator');
+  if(!el) return;
+  if(ui.unsaved){
+    el.textContent = 'Alterações não salvas';
+    el.style.color = '#e8b15a';
+  } else {
+    var d = state.lastSaved ? new Date(state.lastSaved) : null;
+    el.textContent = d ? ('Salvo às ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})) : 'Ainda não salvo';
+    el.style.color = '#82868f';
+  }
+}
+
+function renderTopbar(){
+  var tb = document.getElementById('topbar');
+  tb.innerHTML =
+    '<div class="brand"><span class="mark">TS</span><span>TROK Service<div class="sub" style="font-weight:500;">Folha por loja</div></span></div>' +
+    '<div class="competencia-box">Competência <input type="text" id="competenciaInput" value="'+escapeHtml(state.competencia)+'" maxlength="7" placeholder="MM/AAAA"></div>' +
+    '<div class="topbar-spacer"></div>' +
+    '<div id="saveIndicator" style="font-size:11.5px;color:#82868f;margin-right:6px;"></div>' +
+    '<div class="topbar-actions">' +
+      '<button class="btn btn-ghost-dark" id="btnHistorico">📚 Histórico</button>' +
+      '<button class="btn btn-ghost-dark" id="btnConfig">⚙️ Configurações</button>' +
+      '<button class="btn btn-ghost-dark" id="btnExport">⬇️ Backup</button>' +
+      '<button class="btn btn-ghost-dark" id="btnImportBackup">⬆️ Restaurar</button>' +
+      '<input type="file" id="fileBackup" accept=".json" style="display:none;">' +
+      '<button class="btn btn-ghost-dark" id="btnImportPdf">📥 Importar PDF (dia 15 ou 30)</button>' +
+      '<button class="btn btn-ghost-dark" id="btnPrint">🖨️ Imprimir relatório</button>' +
+      '<button class="btn btn-primary" id="btnSave">💾 Salvar</button>' +
+      '<button class="btn btn-ghost-dark" id="btnSair" title="Sair">🚪 Sair</button>' +
+    '</div>';
+  renderSaveIndicator();
+  $('#btnSair').addEventListener('click', sairApp);
+  $('#competenciaInput').addEventListener('change', function(e){
+    state.competencia = e.target.value.trim();
+    markDirty();
+  });
+  $('#btnSave').addEventListener('click', function(){ saveState(); });
+  $('#btnExport').addEventListener('click', exportBackup);
+  $('#btnImportBackup').addEventListener('click', function(){ $('#fileBackup').click(); });
+  $('#fileBackup').addEventListener('change', function(e){
+    if(e.target.files[0]) importBackup(e.target.files[0]);
+    e.target.value='';
+  });
+  $('#btnImportPdf').addEventListener('click', openImportModal);
+  $('#btnPrint').addEventListener('click', openPrintModal);
+  $('#btnHistorico').addEventListener('click', openHistoricoModal);
+  $('#btnConfig').addEventListener('click', openConfigModal);
+}
+
+/* ===================== SIDEBAR ===================== */
+function flagLoja(loja){ return loja === 'A Definir'; }
+
+function renderSidebar(){
+  var sb = document.getElementById('sidebar');
+  var lojas = state.lojas;
+  var html = '<div class="side-search"><input type="text" id="sideSearch" placeholder="Buscar funcionário…" value="'+escapeHtml(ui.search)+'"></div>';
+  html += '<ul class="side-list">';
+  html += sideItemHtml('__dashboard__', 'Visão geral', state.funcionarios.filter(function(f){return f.ativo!==false;}).length, totalGeral(), ui.view.type==='dashboard');
+  html += '<div class="side-section-label">Lojas</div>';
+  lojas.forEach(function(loja){
+    if(loja === 'Administração/Sócios' || loja === 'A Definir') return;
+    var list = funcionariosEfetivosNaLoja(loja);
+    html += sideItemHtml(loja, loja, list.length, totalLoja(loja), ui.view.type==='loja' && ui.view.loja===loja);
+  });
+  html += '<div class="side-section-label">Outros</div>';
+  ['Administração/Sócios','A Definir'].forEach(function(loja){
+    var list = funcionariosEfetivosNaLoja(loja);
+    html += sideItemHtml(loja, loja, list.length, totalLoja(loja), ui.view.type==='loja' && ui.view.loja===loja, flagLoja(loja));
+  });
+  html += '</ul>';
+  html += '<div class="side-foot">TROK Service · <b>'+state.funcionarios.filter(function(f){return f.ativo!==false;}).length+'</b> funcionários ativos</div>';
+  sb.innerHTML = html;
+
+  $('#sideSearch').addEventListener('input', function(e){
+    ui.search = e.target.value;
+    if(ui.search.trim()){ ui.view = {type:'search'}; }
+    else if(ui.view.type==='search'){ ui.view = {type:'dashboard'}; }
+    renderSidebarActiveOnly();
+    renderMain();
+  });
+
+  $all('.side-item', sb).forEach(function(it){
+    it.addEventListener('click', function(){
+      var key = it.dataset.key;
+      ui.search = '';
+      if(key === '__dashboard__') ui.view = {type:'dashboard'};
+      else ui.view = {type:'loja', loja:key};
+      renderSidebar();
+      renderMain();
+    });
+  });
+}
+function renderSidebarActiveOnly(){
+  $all('.side-item').forEach(function(it){
+    var active = false;
+    if(ui.view.type==='dashboard' && it.dataset.key==='__dashboard__') active=true;
+    if(ui.view.type==='loja' && it.dataset.key===ui.view.loja) active=true;
+    it.classList.toggle('active', active);
+  });
+}
+function sideItemHtml(key, label, count, total, active, flagged){
+  return '<li class="side-item'+(active?' active':'')+'" data-key="'+escapeHtml(key)+'">' +
+    '<span class="si-name">'+(flagged?'<span class="si-flag">⚠️</span>':'')+escapeHtml(label)+'</span>' +
+    '<span class="si-meta"><span class="si-total">R$ '+toBRL(total)+'</span><span class="si-count">'+count+' func.</span></span>' +
+  '</li>';
+}
+
+/* ===================== MAIN ===================== */
+function renderMain(){
+  var main = document.getElementById('main');
+  if(ui.view.type === 'search'){
+    main.innerHTML = renderSearchView();
+  } else if(ui.view.type === 'loja'){
+    main.innerHTML = renderLojaView(ui.view.loja);
+  } else {
+    main.innerHTML = renderDashboardView();
+  }
+  wireMainEvents();
+}
+
+function renderDashboardView(){
+  var lojas = state.lojas;
+  var html = '<div class="view-header"><div class="view-title"><h1>Visão geral · Competência '+escapeHtml(state.competencia)+'</h1>' +
+    '<div class="view-sub">Total a pagar por loja neste ciclo</div></div>' +
+    '<div class="view-actions"><button class="btn btn-primary" id="btnAddEmpDash">+ Adicionar funcionário</button></div></div>';
+
+  var ativos = state.funcionarios.filter(function(f){return f.ativo!==false;});
+  var porFormaGeral = totaisPorFormaPagamento(ativos);
+  html += '<div class="kpis">' +
+    kpiHtml('Funcionários ativos', ativos.length, '') +
+    kpiHtml('Lojas cadastradas', lojas.filter(function(l){return l!=='Administração/Sócios' && l!=='A Definir';}).length, '') +
+    kpiHtml('Total líquido a pagar', 'R$ '+toBRL(totalGeral()), 'good') +
+    kpiHtml('Sem loja definida', funcionariosPorLoja('A Definir').length, funcionariosPorLoja('A Definir').length>0 ? 'warn' : '') +
+  '</div>';
+  html += '<div class="kpis" style="margin-top:-6px;">' +
+    kpiHtml('🏦 Total via Banco', 'R$ '+toBRL(porFormaGeral.Banco), 'pm-banco') +
+    kpiHtml('💵 Total via Dinheiro', 'R$ '+toBRL(porFormaGeral.Dinheiro), 'pm-dinheiro') +
+    kpiHtml('🍱 Total via Caju', 'R$ '+toBRL(porFormaGeral.Caju), 'pm-caju') +
+  '</div>';
+
+  html += '<div class="dash-grid">';
+  lojas.forEach(function(loja){
+    var entries = funcionariosEfetivosNaLoja(loja);
+    var total = totalLoja(loja);
+    var cls = 'loja-card' + (entries.length===0?' empty':'') + (flagLoja(loja) && entries.length>0 ? ' flagged':'');
+    html += '<div class="'+cls+'" data-key="'+escapeHtml(loja)+'">' +
+      '<div class="lc-name">'+(flagLoja(loja)?'⚠️ ':'🏬 ')+escapeHtml(loja)+'</div>' +
+      '<div class="lc-row"><span>Funcionários</span><span>'+entries.length+(entries.some(function(e){return e.externo;})?' 🔀':'')+'</span></div>' +
+      '<div class="lc-total">R$ '+toBRL(total)+'</div>' +
+      pmChipsHtml(totaisPorFormaPagamentoLoja(entries)) +
+    '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+function pmChipsHtml(totais){
+  var temAlgo = totais.Banco || totais.Dinheiro || totais.Caju;
+  if(!temAlgo) return '';
+  return '<div class="pm-chips">' +
+    FORMAS_PAGAMENTO.map(function(p){
+      return '<span class="pm-chip is-'+p+'">'+pagamentoIcone(p)+' <span class="v">R$ '+toBRL(totais[p])+'</span></span>';
+    }).join('') +
+  '</div>';
+}
+function kpiHtml(label, value, kind){
+  return '<div class="kpi'+(kind?' '+kind:'')+'"><div class="kpi-label">'+escapeHtml(label)+'</div><div class="kpi-value">'+value+'</div></div>';
+}
+
+function renderSearchView(){
+  var q = normName(ui.search).join(' ');
+  var qRaw = stripAccents(ui.search).toUpperCase();
+  var results = state.funcionarios.filter(function(f){
+    return stripAccents(f.nome).toUpperCase().indexOf(qRaw) > -1;
+  });
+  var html = '<div class="view-header"><div class="view-title"><h1>Resultados para "'+escapeHtml(ui.search)+'"</h1>' +
+    '<div class="view-sub">'+results.length+' funcionário(s) encontrado(s)</div></div></div>';
+  html += renderEmployeeTable(results, {showLoja:true});
+  return html;
+}
+
+function renderLojaView(loja){
+  var entries = funcionariosEfetivosNaLoja(loja);
+  var total = totalLoja(loja);
+  var isDiretoria = (loja === 'Administração/Sócios');
+  var html = '<div class="view-header"><div class="view-title"><h1>'+(flagLoja(loja)?'⚠️ ':'🏬 ')+escapeHtml(loja)+(isDiretoria?' · Folha de Diretoria':'')+'</h1>' +
+    '<div class="view-sub">'+entries.length+' funcionário(s) · líquido total R$ '+toBRL(total)+(rateioAfetaLoja(loja)?' <span style="color:var(--warn);">· inclui rateio entre lojas 🔀</span>':'')+'</div>' +
+    pmChipsHtml(totaisPorFormaPagamentoLoja(entries)) +
+    '</div>' +
+    '<div class="view-actions">' +
+      '<button class="btn" id="btnPrintLoja" data-loja="'+escapeHtml(loja)+'">🖨️ Imprimir esta loja</button>' +
+      '<button class="btn btn-primary" id="btnAddEmpLoja" data-loja="'+escapeHtml(loja)+'">+ Adicionar funcionário</button>' +
+    '</div></div>';
+  if(isDiretoria){
+    html += '<div class="panel" style="padding:12px 16px;margin-bottom:14px;font-size:12.5px;color:var(--ink-dim);">' +
+      '💡 Alguns diretores/funcionários daqui têm o custo do salário dividido entre várias lojas. Use o botão <b>🔀</b> na linha do funcionário para configurar o rateio — os totais de cada loja no painel, na barra lateral e no relatório impresso passam a refletir essa divisão automaticamente, e a pessoa passa a aparecer também no relatório de cada loja incluída no rateio.' +
+    '</div>';
+  }
+  html += renderEmployeeTable(entries, {showLoja:false, loja:loja, entries:true});
+  return html;
+}
+/* indica se alguma parte do custo desta loja vem de rateio (funcionário cadastrado
+   em outra loja mas com % de custo atribuído aqui), para exibir um aviso visual */
+function rateioAfetaLoja(loja){
+  return state.funcionarios.some(function(f){
+    if(f.ativo === false || !f.rateioLojas || !f.rateioLojas.length) return false;
+    return f.rateioLojas.some(function(r){ return r.loja === loja; });
+  });
+}
+
+function renderEmployeeTable(list, opts){
+  opts = opts || {};
+  if(list.length === 0){
+    return '<div class="panel"><div class="empty-state"><div class="es-icon">🗂️</div>Nenhum funcionário aqui ainda.<br>Use "Adicionar funcionário" para começar.</div></div>';
+  }
+  // normaliza para um formato único {f, valorLoja, percentualLoja, externo} — quando
+  // não vem de funcionariosEfetivosNaLoja (ex: busca global), valorLoja = 100% do total.
+  var rows = list.map(function(item){
+    if(opts.entries) return item;
+    return {f:item, valorLoja: calcTotalPagar(item), percentualLoja: 100, externo:false, temRateio:false};
+  });
+  var html = '<div class="panel" style="overflow-x:auto;"><table class="emp-table"><thead><tr>' +
+    '<th>Funcionário</th><th>Empresa</th>'+(opts.showLoja?'<th>Loja</th>':'')+
+    '<th class="col-num">Salário base</th><th class="col-num">Adicionais</th><th class="col-num">Descontos</th>' +
+    '<th class="col-num">Líquido salário</th><th>Pagto. salário</th><th class="col-num">🍱 Caju (VA+VT)</th><th class="col-num">Total '+(opts.loja?'nesta loja':'a pagar')+'</th><th></th></tr></thead><tbody>';
+  rows.forEach(function(row){
+    var f = row.f;
+    var liquido = calcLiquido(f);
+    var caju = totalCaju(f);
+    var parcial = toNum(row.percentualLoja) < 100;
+    html += '<tr data-id="'+f.id+'">' +
+      '<td><div class="emp-name">'+escapeHtml(f.nome)+'</div><div class="emp-cargo">'+escapeHtml(f.cargo||'')+'</div>'+
+        (row.externo ? '<div class="emp-badge-rateio" title="Loja cadastrada deste funcionário">🔀 vindo de '+escapeHtml(f.loja)+'</div>' : '') +
+        rateioBadgeHtml(f)+adiantamentoBadgeHtml(f)+'</td>' +
+      '<td><span class="badge '+empresaClass(f.empresa)+'">'+escapeHtml(f.empresa||'—')+'</span></td>' +
+      (opts.showLoja ? '<td>'+renderLojaSelectInline(f)+'</td>' : '') +
+      '<td class="col-num">R$ '+toBRL(f.salarioBaseMes)+'</td>' +
+      '<td class="col-num">'+(totalProventosExtras(f)>0 ? '+ R$ '+toBRL(totalProventosExtras(f)) : '—')+'</td>' +
+      '<td class="col-num">'+(totalDescontosExtras(f)>0 ? '− R$ '+toBRL(totalDescontosExtras(f)) : '—')+'</td>' +
+      '<td class="col-num">R$ '+toBRL(liquido)+'</td>' +
+      '<td>'+renderFormaPagamentoInline(f)+'</td>' +
+      '<td class="col-num" title="Vale Alimentação: R$ '+toBRL(f.valeAlimentacao)+' · Vale Transporte: R$ '+toBRL(f.valeTransporte)+'">'+(caju>0 ? 'R$ '+toBRL(caju) : '—')+'</td>' +
+      '<td class="col-num col-liquido">R$ '+toBRL(row.valorLoja)+(parcial ? ' <span style="font-weight:400;font-size:10.5px;color:var(--ink-dim);">('+toNum(row.percentualLoja).toFixed(0)+'% aqui)</span>' : '')+'</td>' +
+      '<td><div class="row-actions">' +
+        (opts.showLoja || row.externo ? '' : '<select class="loja-select-inline" data-act="mover" data-id="'+f.id+'">'+lojaOptionsHtml(f.loja)+'</select>') +
+        '<button class="icon-btn" data-act="rateio" data-id="'+f.id+'" title="Rateio entre lojas">🔀</button>' +
+        '<button class="icon-btn" data-act="editar" data-id="'+f.id+'" title="Editar">✏️</button>' +
+        '<button class="icon-btn" data-act="excluir" data-id="'+f.id+'" title="Excluir">🗑️</button>' +
+      '</div></td>' +
+    '</tr>';
+  });
+  html += '</tbody></table></div>';
+  return html;
+}
+function renderFormaPagamentoInline(f){
+  var atual = FORMAS_PAGAMENTO_SALARIO.indexOf(f.formaPagamento) > -1 ? f.formaPagamento : 'Banco';
+  return '<select class="loja-select-inline" data-act="pagamento" data-id="'+f.id+'">' +
+    FORMAS_PAGAMENTO_SALARIO.map(function(p){ return '<option value="'+p+'"'+(p===atual?' selected':'')+'>'+pagamentoIcone(p)+' '+p+'</option>'; }).join('') +
+    '</select>';
+}
+function pagamentoIcone(p){
+  return p==='Banco' ? '🏦' : (p==='Dinheiro' ? '💵' : '🍱');
+}
+function renderLojaSelectInline(f){
+  return '<select class="loja-select-inline" data-act="mover" data-id="'+f.id+'">'+lojaOptionsHtml(f.loja)+'</select>';
+}
+function lojaOptionsHtml(current){
+  return state.lojas.map(function(l){
+    return '<option value="'+escapeHtml(l)+'"'+(l===current?' selected':'')+'>'+escapeHtml(l)+'</option>';
+  }).join('');
+}
+function rateioBadgeHtml(f){
+  var rateio = (f.rateioLojas||[]).filter(function(r){ return r.loja && toNum(r.percentual)>0; });
+  if(!rateio.length) return '';
+  var titulo = rateio.map(function(r){ return r.loja+': '+toNum(r.percentual)+'%'; }).join(' · ');
+  return '<div class="emp-badge-rateio" title="Rateado entre: '+escapeHtml(titulo)+'">🔀 '+rateio.map(function(r){return escapeHtml(r.loja)+' '+toNum(r.percentual)+'%';}).join(' · ')+'</div>';
+}
+function adiantamentoBadgeHtml(f){
+  var ad = f.adiantamentos ? f.adiantamentos[state.competencia] : null;
+  if(!ad) return '';
+  return '<div class="emp-badge-adiant" title="Adiantamento (dia 15) importado desta competência">💰 Adiant. dia 15: R$ '+toBRL(ad.valorLiquido)+'</div>';
+}
+/* ===================== EVENTOS DA VIEW PRINCIPAL ===================== */
+function wireMainEvents(){
+  var main = document.getElementById('main');
+
+  $all('.loja-card', main).forEach(function(card){
+    card.addEventListener('click', function(){
+      ui.view = {type:'loja', loja:card.dataset.key};
+      renderSidebar();
+      renderMain();
+    });
+  });
+  var btnAddDash = $('#btnAddEmpDash', main);
+  if(btnAddDash) btnAddDash.addEventListener('click', function(){ openEmployeeModal(null, null); });
+
+  var btnAddLoja = $('#btnAddEmpLoja', main);
+  if(btnAddLoja) btnAddLoja.addEventListener('click', function(){ openEmployeeModal(null, btnAddLoja.dataset.loja); });
+
+  var btnPrintLoja = $('#btnPrintLoja', main);
+  if(btnPrintLoja) btnPrintLoja.addEventListener('click', function(){ openPrintModal([btnPrintLoja.dataset.loja]); });
+
+  on(main, 'click', '[data-act="editar"]', function(e, t){
+    var f = state.funcionarios.find(function(x){ return x.id===t.dataset.id; });
+    if(f) openEmployeeModal(f, null);
+  });
+  on(main, 'click', '[data-act="rateio"]', function(e, t){
+    var f = state.funcionarios.find(function(x){ return x.id===t.dataset.id; });
+    if(f) openRateioModal(f);
+  });
+  on(main, 'click', '[data-act="excluir"]', function(e, t){
+    var f = state.funcionarios.find(function(x){ return x.id===t.dataset.id; });
+    if(!f) return;
+    confirmDialog('Excluir funcionário', 'Tem certeza que deseja excluir "'+f.nome+'"? Esta ação não pode ser desfeita.', function(){
+      state.funcionarios = state.funcionarios.filter(function(x){ return x.id !== f.id; });
+      markDirty();
+      renderSidebar();
+      renderMain();
+      toast('Funcionário excluído.', 'good');
+    });
+  });
+  on(main, 'change', '[data-act="mover"]', function(e, t){
+    var f = state.funcionarios.find(function(x){ return x.id===t.dataset.id; });
+    if(!f) return;
+    var novaLoja = t.value;
+    var antiga = f.loja;
+    f.loja = novaLoja;
+    markDirty();
+    renderSidebar();
+    renderMain();
+    toast(f.nome.split(' ')[0]+' movido(a) de "'+antiga+'" para "'+novaLoja+'".', 'good');
+  });
+  on(main, 'change', '[data-act="pagamento"]', function(e, t){
+    var f = state.funcionarios.find(function(x){ return x.id===t.dataset.id; });
+    if(!f) return;
+    f.formaPagamento = t.value;
+    markDirty();
+    toast(f.nome.split(' ')[0]+' agora recebe via '+t.value+'.', 'good');
+  });
+}
+
+/* ===================== MODAL GENÉRICO ===================== */
+function openModal(html, opts){
+  opts = opts || {};
+  closeModal();
+  var ov = document.createElement('div');
+  ov.className = 'modal-overlay';
+  ov.id = 'modalOverlay';
+  ov.innerHTML = '<div class="modal'+(opts.large?' modal-lg':'')+'">'+html+'</div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('mousedown', function(e){ if(e.target === ov && opts.closableBackdrop !== false) closeModal(); });
+  document.addEventListener('keydown', escCloseHandler);
+  return ov;
+}
+function escCloseHandler(e){ if(e.key === 'Escape') closeModal(); }
+function closeModal(){
+  var ov = document.getElementById('modalOverlay');
+  if(ov) ov.remove();
+  document.removeEventListener('keydown', escCloseHandler);
+}
+function confirmDialog(title, msg, onConfirm){
+  var html =
+    '<div class="modal-head"><h2>'+escapeHtml(title)+'</h2></div>' +
+    '<div class="modal-body">'+escapeHtml(msg)+'</div>' +
+    '<div class="modal-foot"><button class="btn" id="cdCancel">Cancelar</button><button class="btn btn-danger" id="cdOk">Confirmar exclusão</button></div>';
+  var ov = openModal(html);
+  $('#cdCancel', ov).addEventListener('click', closeModal);
+  $('#cdOk', ov).addEventListener('click', function(){ closeModal(); onConfirm(); });
+}
+/* Pergunta a data efetiva de pagamento de uma folha/adiantamento antes de confirmar
+   a importação — a folha costuma ser fechada/cadastrada alguns dias ANTES do dia em
+   que o pagamento sai de fato, então guardamos essa data separada da competência
+   (MM/AAAA) para depois dar pra consultar "quanto foi pago em tal dia". */
+function pedirDataPagamento(rotulo, defaultDate, cb){
+  var html =
+    '<div class="modal-head"><h2>📅 Data de pagamento</h2></div>' +
+    '<div class="modal-body">' +
+      '<p style="font-size:12.5px;color:var(--ink-dim);">A folha costuma ser fechada/cadastrada alguns dias antes do pagamento sair de fato. Informe o dia em que <b>'+escapeHtml(rotulo)+'</b> vai ser efetivamente paga — isso permite depois consultar quanto saiu em cada data.</p>' +
+      '<label style="display:block;margin-top:10px;font-size:12.5px;font-weight:600;">Data de pagamento</label>' +
+      '<input type="date" id="dpInput" value="'+escapeHtml(defaultDate||'')+'" style="margin-top:4px;">' +
+    '</div>' +
+    '<div class="modal-foot"><button class="btn btn-primary" id="dpOk">Confirmar</button></div>';
+  var ov = openModal(html, {closableBackdrop:false});
+  var input = $('#dpInput', ov);
+  input.focus();
+  function submit(){
+    var val = input.value;
+    if(!val){ toast('Informe a data de pagamento.', 'bad'); return; }
+    cb(val);
+  }
+  $('#dpOk', ov).addEventListener('click', submit);
+  input.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); submit(); } });
+}
+
+/* ===================== MODAL FUNCIONÁRIO (criar/editar) ===================== */
+function adiantamentosHistoricoHtml(f){
+  var comps = Object.keys(f.adiantamentos||{}).sort().reverse();
+  if(!comps.length) return '';
+  return '<div class="section-title">💰 Adiantamentos quinzenais importados (dia 15)</div>' +
+    '<div class="panel" style="padding:8px 12px;margin-bottom:10px;">' +
+    comps.map(function(c){
+      var a = f.adiantamentos[c];
+      return '<div class="sr"><span>'+escapeHtml(c)+(c===state.competencia?' <b>(competência atual)</b>':'')+'</span>' +
+        '<span class="val">R$ '+toBRL(a.valorLiquido)+(toNum(a.provisaoValor) ? ' <span style="color:var(--ink-dim);font-weight:400;">(bruto R$ '+toBRL(a.valorBruto)+')</span>' : '')+'</span></div>';
+    }).join('') +
+    '<div style="font-size:11px;color:var(--ink-dim);margin-top:4px;">Somente informativo — importado do PDF de adiantamento. Não altera o cálculo do salário/proventos/descontos acima.</div>' +
+    '</div>';
+}
+function openEmployeeModal(funcionario, lojaPreSelecionada){
+  var isNew = !funcionario;
+  var draft = funcionario ? JSON.parse(JSON.stringify(funcionario)) : {
+    id: uid('f'),
+    codigo: '',
+    nome: '',
+    cargo: '',
+    empresa: state.empresas[0] || '',
+    loja: lojaPreSelecionada || state.lojas[0],
+    admissao: '',
+    salarioContratual: 0,
+    salarioBaseMes: 0,
+    formaPagamento: 'Banco',
+    valeAlimentacao: 0,
+    valeTransporte: 0,
+    proventosExtras: [],
+    descontosExtras: [],
+    rateioLojas: [],
+    adiantamentos: {},
+    observacao: '',
+    ativo: true
+  };
+
+  var html =
+    '<div class="modal-head"><h2>'+(isNew?'Adicionar funcionário':'Editar funcionário')+'</h2>' +
+      '<button class="icon-btn" id="empClose">✕</button></div>' +
+    '<div class="modal-body" id="empBody"></div>' +
+    '<div class="modal-foot">' +
+      '<button class="btn" id="empCancel">Cancelar</button>' +
+      '<button class="btn btn-primary" id="empSave">'+(isNew?'Adicionar':'Salvar alterações')+'</button>' +
+    '</div>';
+  var ov = openModal(html, {large:true});
+  $('#empClose', ov).addEventListener('click', closeModal);
+  $('#empCancel', ov).addEventListener('click', closeModal);
+
+  function renderBody(){
+    var body = $('#empBody', ov);
+    body.innerHTML =
+      '<div class="field-row">' +
+        '<div class="field"><label>Nome completo</label><input type="text" id="fNome" value="'+escapeHtml(draft.nome)+'" placeholder="Ex: João da Silva"></div>' +
+        '<div class="field"><label>Cargo</label><input type="text" id="fCargo" value="'+escapeHtml(draft.cargo)+'" placeholder="Ex: Mecânico"></div>' +
+      '</div>' +
+      '<div class="field-row3">' +
+        '<div class="field"><label>Empresa</label><select id="fEmpresa">'+state.empresas.map(function(e){return '<option'+(e===draft.empresa?' selected':'')+'>'+escapeHtml(e)+'</option>';}).join('')+'</select></div>' +
+        '<div class="field"><label>Loja</label><select id="fLoja">'+lojaOptionsHtml(draft.loja)+'</select></div>' +
+        '<div class="field"><label>Admissão</label><input type="text" id="fAdmissao" value="'+escapeHtml(draft.admissao)+'" placeholder="DD/MM/AAAA"></div>' +
+      '</div>' +
+      '<div class="field-row">' +
+        '<div class="field"><label>Salário base / mês (R$)</label><input type="number" step="0.01" id="fSalario" value="'+toNum(draft.salarioBaseMes)+'"></div>' +
+        '<div class="field"><label>Salário contratual de referência (R$)</label><input type="number" step="0.01" id="fSalarioContratual" value="'+toNum(draft.salarioContratual)+'"></div>' +
+      '</div>' +
+      '<div class="field"><label>Forma de pagamento do salário</label><select id="fFormaPagamento">'+FORMAS_PAGAMENTO_SALARIO.map(function(p){return '<option value="'+p+'"'+(p===draft.formaPagamento?' selected':'')+'>'+pagamentoIcone(p)+' '+p+'</option>';}).join('')+'</select></div>' +
+
+      '<div class="section-title">🍱 Caju — vale alimentação e vale transporte</div>' +
+      '<p style="font-size:11.5px;color:var(--ink-dim);margin:-2px 0 8px;">Esses valores são pagos separadamente, via cartão Caju, e somados ao salário no total a pagar.</p>' +
+      '<div class="field-row">' +
+        '<div class="field"><label>Vale Alimentação (R$)</label><input type="number" step="0.01" id="fVA" value="'+toNum(draft.valeAlimentacao)+'"></div>' +
+        '<div class="field"><label>Vale Transporte (R$)</label><input type="number" step="0.01" id="fVT" value="'+toNum(draft.valeTransporte)+'"></div>' +
+      '</div>' +
+
+      '<div class="section-title">Adicionais (proventos extras) <button class="btn btn-sm" id="addProvento">+ adicional</button></div>' +
+      '<div id="proventosList"></div>' +
+
+      '<div class="section-title">Descontos <button class="btn btn-sm" id="addDesconto">+ desconto</button></div>' +
+      '<div id="descontosList"></div>' +
+
+      '<div class="field" style="margin-top:14px;"><label>Observação</label><input type="text" id="fObs" value="'+escapeHtml(draft.observacao||'')+'" placeholder="Ex: Férias (01/06 a 30/06)"></div>' +
+
+      adiantamentosHistoricoHtml(draft) +
+
+      '<div class="summary-box" id="empSummary"></div>';
+
+    renderLineItems('proventosList', draft.proventosExtras, 'p');
+    renderLineItems('descontosList', draft.descontosExtras, 'd');
+    renderSummary();
+
+    $('#fNome', body).addEventListener('input', function(e){ draft.nome = e.target.value; });
+    $('#fCargo', body).addEventListener('input', function(e){ draft.cargo = e.target.value; });
+    $('#fEmpresa', body).addEventListener('change', function(e){ draft.empresa = e.target.value; });
+    $('#fLoja', body).addEventListener('change', function(e){ draft.loja = e.target.value; });
+    $('#fAdmissao', body).addEventListener('input', function(e){ draft.admissao = e.target.value; });
+    $('#fSalario', body).addEventListener('input', function(e){ draft.salarioBaseMes = toNum(e.target.value); renderSummary(); });
+    $('#fSalarioContratual', body).addEventListener('input', function(e){ draft.salarioContratual = toNum(e.target.value); });
+    $('#fFormaPagamento', body).addEventListener('change', function(e){ draft.formaPagamento = e.target.value; });
+    $('#fVA', body).addEventListener('input', function(e){ draft.valeAlimentacao = toNum(e.target.value); renderSummary(); });
+    $('#fVT', body).addEventListener('input', function(e){ draft.valeTransporte = toNum(e.target.value); renderSummary(); });
+    $('#fObs', body).addEventListener('input', function(e){ draft.observacao = e.target.value; });
+    $('#addProvento', body).addEventListener('click', function(){
+      draft.proventosExtras.push({id:uid('p'), descricao:'', valor:0});
+      renderLineItems('proventosList', draft.proventosExtras, 'p');
+      renderSummary();
+    });
+    $('#addDesconto', body).addEventListener('click', function(){
+      draft.descontosExtras.push({id:uid('d'), descricao:'', valor:0});
+      renderLineItems('descontosList', draft.descontosExtras, 'd');
+      renderSummary();
+    });
+  }
+
+  function renderLineItems(containerId, arr, kind){
+    var c = $('#'+containerId, ov);
+    if(arr.length === 0){ c.innerHTML = '<div style="font-size:12px;color:var(--ink-dim);margin-bottom:6px;">Nenhum item.</div>'; return; }
+    c.innerHTML = arr.map(function(item, idx){
+      return '<div class="line-item" data-idx="'+idx+'">' +
+        '<input type="text" placeholder="Descrição" value="'+escapeHtml(item.descricao)+'" data-field="descricao">' +
+        '<input type="number" step="0.01" placeholder="0,00" value="'+toNum(item.valor)+'" data-field="valor">' +
+        '<button class="rm" title="Remover">✕</button>' +
+      '</div>';
+    }).join('');
+    $all('.line-item', c).forEach(function(row){
+      var idx = parseInt(row.dataset.idx,10);
+      $all('input', row).forEach(function(inp){
+        inp.addEventListener('input', function(){
+          var field = inp.dataset.field;
+          arr[idx][field] = field==='valor' ? toNum(inp.value) : inp.value;
+          renderSummary();
+        });
+      });
+      row.querySelector('.rm').addEventListener('click', function(){
+        arr.splice(idx,1);
+        renderLineItems(containerId, arr, kind);
+        renderSummary();
+      });
+    });
+  }
+
+  function renderSummary(){
+    var box = $('#empSummary', ov);
+    if(!box) return;
+    var p = draft.proventosExtras.reduce(function(s,x){return s+toNum(x.valor);},0);
+    var d = draft.descontosExtras.reduce(function(s,x){return s+toNum(x.valor);},0);
+    var liq = round2(toNum(draft.salarioBaseMes) + p - d);
+    var caju = round2(toNum(draft.valeAlimentacao) + toNum(draft.valeTransporte));
+    var totalGeralFunc = round2(liq + caju);
+    box.innerHTML =
+      '<div class="sr"><span>Salário base</span><span class="val">R$ '+toBRL(draft.salarioBaseMes)+'</span></div>' +
+      '<div class="sr"><span>+ Adicionais</span><span class="val">R$ '+toBRL(p)+'</span></div>' +
+      '<div class="sr"><span>− Descontos</span><span class="val">R$ '+toBRL(d)+'</span></div>' +
+      '<div class="sr total"><span>'+pagamentoIcone(draft.formaPagamento)+' Líquido salário (via '+draft.formaPagamento+')</span><span class="val">R$ '+toBRL(liq)+'</span></div>' +
+      '<div class="sr" style="margin-top:8px;"><span>🍱 Vale Alimentação</span><span class="val">R$ '+toBRL(draft.valeAlimentacao)+'</span></div>' +
+      '<div class="sr"><span>🍱 Vale Transporte</span><span class="val">R$ '+toBRL(draft.valeTransporte)+'</span></div>' +
+      '<div class="sr total"><span>🍱 Total via Caju</span><span class="val">R$ '+toBRL(caju)+'</span></div>' +
+      '<div class="sr total" style="border-top:2px solid var(--ink);margin-top:8px;padding-top:8px;font-size:16px;"><span>Total geral a pagar</span><span class="val">R$ '+toBRL(totalGeralFunc)+'</span></div>';
+  }
+
+  renderBody();
+
+  $('#empSave', ov).addEventListener('click', function(){
+    if(!draft.nome.trim()){ toast('Informe o nome do funcionário.', 'bad'); return; }
+    draft.proventosExtras = draft.proventosExtras.filter(function(x){ return x.descricao.trim() || toNum(x.valor)!==0; });
+    draft.descontosExtras = draft.descontosExtras.filter(function(x){ return x.descricao.trim() || toNum(x.valor)!==0; });
+    if(isNew){
+      state.funcionarios.push(draft);
+      toast('Funcionário adicionado a "'+draft.loja+'".', 'good');
+    } else {
+      var idx = state.funcionarios.findIndex(function(x){ return x.id===draft.id; });
+      state.funcionarios[idx] = draft;
+      toast('Alterações salvas.', 'good');
+    }
+    markDirty();
+    closeModal();
+    renderSidebar();
+    renderMain();
+  });
+}
+/* ===================== RATEIO ENTRE LOJAS ===================== */
+/* Usado principalmente na "folha de diretoria" (loja Administração/Sócios),
+   onde diretores e alguns funcionários têm o custo do salário dividido entre
+   mais de uma loja da rede. Pode ser usado a partir de qualquer loja. */
+function openRateioModal(f){
+  var draft = (f.rateioLojas||[]).filter(function(r){return r.loja;}).map(function(r){ return {loja:r.loja, percentual:toNum(r.percentual)}; });
+  if(!draft.length) draft = [{loja:f.loja, percentual:100}];
+  var total = calcTotalPagar(f);
+
+  var html =
+    '<div class="modal-head"><h2>🔀 Rateio entre lojas — '+escapeHtml(f.nome)+'</h2><button class="icon-btn" id="ratClose">✕</button></div>' +
+    '<div class="modal-body">' +
+      '<p style="font-size:12.5px;color:var(--ink-dim);">Para funcionários pagos ou alocados em mais de uma loja (comum na diretoria/administração), divida aqui o percentual do custo total (R$ '+toBRL(total)+') que deve ser atribuído a cada loja nos relatórios e totais. O funcionário continua listado na loja cadastrada no cadastro; o rateio afeta apenas os totais financeiros por loja.</p>' +
+      '<div id="ratRows"></div>' +
+      '<button class="btn btn-sm" id="ratAddRow" style="margin-top:8px;">+ Adicionar loja</button>' +
+      '<div id="ratSomaAviso" style="margin-top:12px;font-size:12.5px;font-weight:700;"></div>' +
+    '</div>' +
+    '<div class="modal-foot">' +
+      '<button class="btn btn-danger" id="ratLimpar">Remover rateio (100% na loja cadastrada)</button>' +
+      '<button class="btn" id="ratCancel">Cancelar</button>' +
+      '<button class="btn btn-primary" id="ratSave">Salvar rateio</button>' +
+    '</div>';
+  var ov = openModal(html, {large:true});
+  $('#ratClose', ov).addEventListener('click', closeModal);
+  $('#ratCancel', ov).addEventListener('click', closeModal);
+
+  function renderRows(){
+    var c = $('#ratRows', ov);
+    c.innerHTML = draft.map(function(r, idx){
+      return '<div class="line-item" data-idx="'+idx+'">' +
+        '<select data-field="loja" style="flex:2;">'+lojaOptionsHtml(r.loja)+'</select>' +
+        '<input type="number" step="0.01" min="0" max="100" data-field="percentual" value="'+r.percentual+'" style="flex:1;">' +
+        '<span style="font-size:12px;color:var(--ink-dim);white-space:nowrap;">% · R$ '+toBRL(round2(total * toNum(r.percentual)/100))+'</span>' +
+        '<button class="rm" title="Remover">✕</button>' +
+      '</div>';
+    }).join('');
+    $all('.line-item', c).forEach(function(row){
+      var idx = parseInt(row.dataset.idx,10);
+      row.querySelector('[data-field=loja]').addEventListener('change', function(e){ draft[idx].loja = e.target.value; renderSoma(); });
+      row.querySelector('[data-field=percentual]').addEventListener('input', function(e){ draft[idx].percentual = toNum(e.target.value); renderRows(); });
+      row.querySelector('.rm').addEventListener('click', function(){ draft.splice(idx,1); renderRows(); });
+    });
+    renderSoma();
+  }
+  function renderSoma(){
+    var soma = draft.reduce(function(s,r){ return s+toNum(r.percentual); }, 0);
+    var aviso = $('#ratSomaAviso', ov);
+    var ok = Math.abs(soma-100) < 0.01;
+    aviso.style.color = ok ? 'var(--good)' : 'var(--bad)';
+    aviso.textContent = 'Soma dos percentuais: ' + soma.toFixed(2).replace('.',',') + '%' + (ok ? ' ✓' : ' — deve totalizar 100%');
+  }
+  $('#ratAddRow', ov).addEventListener('click', function(){
+    var usadas = draft.map(function(r){return r.loja;});
+    var proxima = state.lojas.find(function(l){ return usadas.indexOf(l) === -1; }) || state.lojas[0];
+    draft.push({loja: proxima, percentual: 0});
+    renderRows();
+  });
+  $('#ratLimpar', ov).addEventListener('click', function(){
+    f.rateioLojas = [];
+    markDirty();
+    closeModal();
+    renderSidebar();
+    renderMain();
+    toast('Rateio removido — 100% do custo volta para "'+f.loja+'".', 'good');
+  });
+  $('#ratSave', ov).addEventListener('click', function(){
+    var limpo = draft.filter(function(r){ return r.loja && toNum(r.percentual) > 0; });
+    var soma = limpo.reduce(function(s,r){ return s+toNum(r.percentual); }, 0);
+    if(limpo.length <= 1){
+      f.rateioLojas = [];
+    } else if(Math.abs(soma-100) > 0.5){
+      toast('A soma dos percentuais precisa ficar em 100% (está em '+soma.toFixed(2).replace('.',',')+'%).', 'bad');
+      return;
+    } else {
+      f.rateioLojas = limpo;
+    }
+    markDirty();
+    closeModal();
+    renderSidebar();
+    renderMain();
+    toast('Rateio de "'+f.nome+'" salvo.', 'good');
+  });
+
+  renderRows();
+}
+/* ===================== BACKUP (exportar/importar JSON) ===================== */
+function exportBackup(){
+  var blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'trok_folha_backup_' + state.competencia.replace('/','-') + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  toast('Backup gerado. Guarde o arquivo em local seguro.', 'good');
+}
+function importBackup(file){
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var parsed = JSON.parse(e.target.result);
+      if(!parsed.funcionarios || !Array.isArray(parsed.funcionarios)) throw new Error('formato inválido');
+      confirmDialog('Restaurar backup', 'Isso vai substituir TODOS os dados atuais pelos dados do arquivo selecionado. Deseja continuar?', function(){
+        state = parsed;
+        if(!state.catalogo) state.catalogo = CATALOGO_PADRAO.slice();
+        if(!state.historico) state.historico = {};
+        state.funcionarios.forEach(migrarFuncionario);
+        markDirty();
+        saveState();
+        renderApp();
+        toast('Backup restaurado com sucesso.', 'good');
+      });
+    }catch(err){
+      toast('Arquivo inválido. Selecione um backup gerado por este app.', 'bad');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ===================== CONFIGURAÇÕES (lojas / catálogo de eventos) ===================== */
+function openConfigModal(){
+  var tab = 'lojas';
+  var html =
+    '<div class="modal-head"><h2>Configurações</h2><button class="icon-btn" id="cfgClose">✕</button></div>' +
+    '<div class="modal-body">' +
+      '<div class="tabs"><div class="tab active" data-tab="lojas">Lojas</div><div class="tab" data-tab="empresas">Empresas</div><div class="tab" data-tab="catalogo">Catálogo de eventos</div></div>' +
+      '<div id="cfgBody"></div>' +
+    '</div>' +
+    '<div class="modal-foot"><button class="btn btn-primary" id="cfgDone">Concluído</button></div>';
+  var ov = openModal(html, {large:true});
+  $('#cfgClose', ov).addEventListener('click', closeModal);
+  $('#cfgDone', ov).addEventListener('click', function(){ markDirty(); closeModal(); renderSidebar(); renderMain(); });
+
+  function renderTabs(){
+    $all('.tab', ov).forEach(function(t){
+      t.classList.toggle('active', t.dataset.tab===tab);
+      t.onclick = function(){ tab = t.dataset.tab; renderTabs(); renderBody(); };
+    });
+  }
+  function renderBody(){
+    var body = $('#cfgBody', ov);
+    if(tab === 'lojas'){
+      body.innerHTML = '<p style="font-size:12.5px;color:var(--ink-dim);">Adicione, renomeie ou remova lojas. Remover uma loja com funcionários vai movê-los para "A Definir".</p>' +
+        '<div id="lojaRows"></div>' +
+        '<div style="display:flex;gap:8px;margin-top:10px;"><input type="text" id="novaLojaInput" placeholder="Nome da nova loja" style="flex:1;padding:7px 9px;border:1px solid var(--line);border-radius:7px;"><button class="btn" id="addLojaBtn">+ Adicionar loja</button></div>';
+      renderLojaRows();
+      $('#addLojaBtn', body).addEventListener('click', function(){
+        var v = $('#novaLojaInput', body).value.trim();
+        if(!v) return;
+        if(state.lojas.indexOf(v) > -1){ toast('Essa loja já existe.', 'bad'); return; }
+        state.lojas.splice(state.lojas.length-2, 0, v); // antes de Administração/A Definir
+        $('#novaLojaInput', body).value = '';
+        renderLojaRows();
+      });
+    } else if(tab === 'empresas'){
+      body.innerHTML = '<p style="font-size:12.5px;color:var(--ink-dim);">Empresas usadas para classificar os funcionários (Contractus, BM Comércio, Mud Scap, etc).</p>' +
+        '<div id="empresaRows"></div>' +
+        '<div style="display:flex;gap:8px;margin-top:10px;"><input type="text" id="novaEmpresaInput" placeholder="Nome da empresa" style="flex:1;padding:7px 9px;border:1px solid var(--line);border-radius:7px;"><button class="btn" id="addEmpresaBtn">+ Adicionar</button></div>';
+      renderEmpresaRows();
+      $('#addEmpresaBtn', body).addEventListener('click', function(){
+        var v = $('#novaEmpresaInput', body).value.trim();
+        if(!v) return;
+        if(state.empresas.indexOf(v) > -1){ toast('Essa empresa já existe.', 'bad'); return; }
+        state.empresas.push(v);
+        $('#novaEmpresaInput', body).value = '';
+        renderEmpresaRows();
+      });
+    } else {
+      body.innerHTML = '<p style="font-size:12.5px;color:var(--ink-dim);">Palavras-chave usadas para classificar automaticamente os eventos da folha (proventos x descontos) ao importar PDFs. A busca não diferencia maiúsculas/acentos.</p>' +
+        '<div id="catRows"></div>' +
+        '<div style="display:flex;gap:8px;margin-top:10px;"><input type="text" id="novaChave" placeholder="Palavra-chave (ex: vale combustível)" style="flex:2;padding:7px 9px;border:1px solid var(--line);border-radius:7px;">' +
+        '<select id="novoTipo" style="padding:7px 9px;border:1px solid var(--line);border-radius:7px;"><option value="provento">Provento</option><option value="desconto">Desconto</option></select>' +
+        '<button class="btn" id="addCatBtn">+ Adicionar</button></div>';
+      renderCatRows();
+      $('#addCatBtn', body).addEventListener('click', function(){
+        var v = $('#novaChave', body).value.trim().toLowerCase();
+        if(!v) return;
+        state.catalogo.push({chave:v, tipo:$('#novoTipo', body).value});
+        $('#novaChave', body).value = '';
+        renderCatRows();
+      });
+    }
+  }
+  function renderLojaRows(){
+    var c = $('#lojaRows', ov);
+    c.innerHTML = state.lojas.map(function(l, i){
+      var count = funcionariosPorLoja(l).length;
+      var fixed = (l==='Administração/Sócios' || l==='A Definir');
+      return '<div class="line-item" data-i="'+i+'">' +
+        '<input type="text" value="'+escapeHtml(l)+'" data-field="nome" '+(fixed?'disabled':'')+' style="flex:2;">' +
+        '<span style="font-size:11.5px;color:var(--ink-dim);min-width:70px;">'+count+' func.</span>' +
+        (fixed?'':'<button class="rm" title="Remover">✕</button>') +
+      '</div>';
+    }).join('');
+    $all('.line-item', c).forEach(function(row){
+      var i = parseInt(row.dataset.i,10);
+      var inp = row.querySelector('input');
+      inp.addEventListener('change', function(){
+        var novo = inp.value.trim();
+        if(!novo) { inp.value = state.lojas[i]; return; }
+        var antigo = state.lojas[i];
+        state.funcionarios.forEach(function(f){ if(f.loja===antigo) f.loja = novo; });
+        state.lojas[i] = novo;
+        renderLojaRows();
+      });
+      var rm = row.querySelector('.rm');
+      if(rm) rm.addEventListener('click', function(){
+        var antigo = state.lojas[i];
+        state.funcionarios.forEach(function(f){ if(f.loja===antigo) f.loja = 'A Definir'; });
+        state.lojas.splice(i,1);
+        renderLojaRows();
+      });
+    });
+  }
+  function renderEmpresaRows(){
+    var c = $('#empresaRows', ov);
+    c.innerHTML = state.empresas.map(function(e, i){
+      return '<div class="line-item" data-i="'+i+'"><input type="text" value="'+escapeHtml(e)+'" style="flex:2;"><button class="rm">✕</button></div>';
+    }).join('');
+    $all('.line-item', c).forEach(function(row){
+      var i = parseInt(row.dataset.i,10);
+      row.querySelector('input').addEventListener('change', function(ev2){ state.empresas[i] = ev2.target.value.trim() || state.empresas[i]; });
+      row.querySelector('.rm').addEventListener('click', function(){ state.empresas.splice(i,1); renderEmpresaRows(); });
+    });
+  }
+  function renderCatRows(){
+    var c = $('#catRows', ov);
+    c.innerHTML = state.catalogo.map(function(item, i){
+      return '<div class="line-item" data-i="'+i+'">' +
+        '<input type="text" value="'+escapeHtml(item.chave)+'" style="flex:2;">' +
+        '<select style="flex:1;"><option value="provento"'+(item.tipo==='provento'?' selected':'')+'>Provento</option><option value="desconto"'+(item.tipo==='desconto'?' selected':'')+'>Desconto</option></select>' +
+        '<button class="rm">✕</button>' +
+      '</div>';
+    }).join('');
+    $all('.line-item', c).forEach(function(row){
+      var i = parseInt(row.dataset.i,10);
+      row.querySelector('input').addEventListener('change', function(ev2){ state.catalogo[i].chave = ev2.target.value.trim().toLowerCase(); });
+      row.querySelector('select').addEventListener('change', function(ev2){ state.catalogo[i].tipo = ev2.target.value; });
+      row.querySelector('.rm').addEventListener('click', function(){ state.catalogo.splice(i,1); renderCatRows(); });
+    });
+  }
+
+  renderTabs();
+  renderBody();
+}
+
+/* ===================== HISTÓRICO ===================== */
+function openHistoricoModal(){
+  var competencias = Object.keys(state.historico||{}).sort().reverse();
+  var html =
+    '<div class="modal-head"><h2>Histórico de competências</h2><button class="icon-btn" id="histClose">✕</button></div>' +
+    '<div class="modal-body" id="histBody">' +
+      '<div class="panel" style="padding:10px 12px;margin-bottom:16px;">' +
+        '<div class="section-title" style="margin-top:0;">🔎 Consultar pagamentos de um dia específico</div>' +
+        '<div style="font-size:12px;color:var(--ink-dim);margin-bottom:6px;">Veja quanto saiu (folha completa e/ou adiantamento) numa data exata, com base na data de pagamento informada em cada importação.</div>' +
+        '<input type="date" id="histBuscaData" style="max-width:200px;">' +
+        '<div id="histBuscaResultado" style="margin-top:10px;"></div>' +
+      '</div>' +
+      (competencias.length===0
+        ? '<div class="empty-state"><div class="es-icon">📚</div>Nenhuma competência arquivada ainda.<br>O histórico é salvo automaticamente sempre que você confirma a importação de uma nova folha mensal.</div>'
+        : '<div class="checklist">'+competencias.map(function(c){
+            var d = (state.datasPagamento && state.datasPagamento[c]) || {};
+            var datasTxt = [d.completa ? 'Folha '+dataBR(d.completa) : null, d.adiantamento ? 'Adiant. '+dataBR(d.adiantamento) : null].filter(Boolean).join(' · ');
+            return '<div class="chk-pill" data-c="'+escapeHtml(c)+'" style="cursor:pointer;">📅 '+escapeHtml(c)+(datasTxt ? '<div style="font-size:10px;color:var(--ink-dim);font-weight:400;margin-top:2px;">'+datasTxt+'</div>' : '')+'</div>';
+          }).join('')+'</div><div id="histDetail" style="margin-top:16px;"></div>') +
+    '</div>' +
+    '<div class="modal-foot"><button class="btn" id="histDone">Fechar</button></div>';
+  var ov = openModal(html, {large:true});
+  $('#histClose', ov).addEventListener('click', closeModal);
+  $('#histDone', ov).addEventListener('click', closeModal);
+
+  $('#histBuscaData', ov).addEventListener('change', function(e){ renderBuscaPorData(e.target.value); });
+  function renderBuscaPorData(dataStr){
+    var out = $('#histBuscaResultado', ov);
+    if(!dataStr){ out.innerHTML = ''; return; }
+    var matches = [];
+    Object.keys(state.datasPagamento||{}).forEach(function(comp){
+      var d = state.datasPagamento[comp];
+      if(d.completa === dataStr) matches.push({comp:comp, tipo:'completa'});
+      if(d.adiantamento === dataStr) matches.push({comp:comp, tipo:'adiantamento'});
+    });
+    if(!matches.length){
+      out.innerHTML = '<div style="font-size:12.5px;color:var(--ink-dim);">Nenhum pagamento com data de '+dataBR(dataStr)+' registrado.</div>';
+      return;
+    }
+    out.innerHTML = matches.map(function(m){
+      var lista, total, rotulo;
+      if(m.tipo === 'completa'){
+        lista = (m.comp === state.competencia) ? state.funcionarios.filter(function(f){return f.ativo!==false;}) : (state.historico[m.comp]||[]);
+        total = lista.reduce(function(s,f){ return s + calcLiquido(f); }, 0);
+        rotulo = '📄 Folha completa · competência '+escapeHtml(m.comp);
+      } else {
+        lista = state.funcionarios.filter(function(f){ return f.adiantamentos && f.adiantamentos[m.comp]; });
+        total = lista.reduce(function(s,f){ return s + toNum(f.adiantamentos[m.comp].valorLiquido); }, 0);
+        rotulo = '💰 Adiantamento (dia 15) · competência '+escapeHtml(m.comp);
+      }
+      return '<div class="summary-box" style="margin-top:8px;">' +
+        '<div class="sr total"><span>'+rotulo+'</span><span class="val">R$ '+toBRL(total)+'</span></div>' +
+        '<div style="font-size:11px;color:var(--ink-dim);margin-top:2px;">'+lista.length+' funcionário(s)</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  $all('.chk-pill', ov).forEach(function(p){
+    p.addEventListener('click', function(){
+      $all('.chk-pill', ov).forEach(function(x){ x.style.background = '#fff'; });
+      p.style.background = 'var(--accent-soft)';
+      var comp = p.dataset.c;
+      var snap = state.historico[comp] || [];
+      var total = snap.reduce(function(s,f){ return s + calcLiquido(f); }, 0);
+      var byLoja = {};
+      snap.forEach(function(f){ byLoja[f.loja] = (byLoja[f.loja]||0) + calcLiquido(f); });
+      var det = $('#histDetail', ov);
+      det.innerHTML = '<div class="section-title">Resumo — '+escapeHtml(comp)+'</div>' +
+        '<table class="review-table"><thead><tr><th>Loja</th><th>Funcionários</th><th>Total líquido</th></tr></thead><tbody>' +
+        Object.keys(byLoja).sort().map(function(l){
+          var n = snap.filter(function(f){return f.loja===l;}).length;
+          return '<tr><td>'+escapeHtml(l)+'</td><td>'+n+'</td><td>R$ '+toBRL(byLoja[l])+'</td></tr>';
+        }).join('') +
+        '</tbody></table>' +
+        '<div class="summary-box"><div class="sr total"><span>Total geral '+escapeHtml(comp)+'</span><span class="val">R$ '+toBRL(total)+'</span></div></div>';
+    });
+  });
+}
+/* ===================== IMPRESSÃO ===================== */
+function itemsCellHtml(items, sign){
+  if(!items || items.length === 0) return '<span class="rpt-dash">—</span>';
+  var isProvento = sign === '+';
+  return items.map(function(it){
+    return '<div class="rpt-item-line'+(isProvento?' is-provento':'')+'">'+escapeHtml(it.descricao||'(sem descrição)')+' <b>'+sign+' R$ '+toBRL(it.valor)+'</b></div>';
+  }).join('');
+}
+function recebimentoCellHtml(f, frac){
+  frac = (frac===undefined || frac===null) ? 1 : frac;
+  var fp = FORMAS_PAGAMENTO_SALARIO.indexOf(f.formaPagamento) > -1 ? f.formaPagamento : 'Banco';
+  var liquido = round2(calcLiquido(f) * frac);
+  // VA/VT (Caju) não são divididos pelo rateio: o valor cheio é o que é cadastrado
+  // para pagamento em cada loja, então aparecem sempre integrais aqui.
+  var va = round2(toNum(f.valeAlimentacao)), vt = round2(toNum(f.valeTransporte));
+  var lines = ['<div class="rpt-pagto is-'+fp+'">'+pagamentoIcone(fp)+' '+fp+': <b>R$ '+toBRL(liquido)+'</b></div>'];
+  if(va > 0) lines.push('<div class="rpt-pagto is-Caju">🍱 VA (Caju): <b>R$ '+toBRL(va)+'</b></div>');
+  if(vt > 0) lines.push('<div class="rpt-pagto is-Caju">🍱 VT (Caju): <b>R$ '+toBRL(vt)+'</b></div>');
+  if(frac < 1) lines.push('<div style="font-size:10px;color:#7a6a4a;">('+Math.round(frac*100)+'% do salário atribuído a esta loja · Caju integral)</div>');
+  return lines.join('');
+}
+function pagtoChipsHtml(porForma, total){
+  return '<div class="rpt-loja-pagto">' +
+    FORMAS_PAGAMENTO.map(function(p){
+      return '<div class="rpt-loja-chip is-'+p+'"><span>'+pagamentoIcone(p)+' '+p+'</span><span class="val">R$ '+toBRL(porForma[p])+'</span></div>';
+    }).join('') +
+  '</div>';
+}
+
+function openPrintModal(preselectLojas){
+  var lojasReais = state.lojas.filter(function(l){ return funcionariosEfetivosNaLoja(l).length > 0; });
+  var html =
+    '<div class="modal-head"><h2>Imprimir relatório de pagamento</h2><button class="icon-btn" id="prClose">✕</button></div>' +
+    '<div class="modal-body">' +
+      '<p style="font-size:12.5px;color:var(--ink-dim);">Selecione as lojas que devem entrar no relatório. Cada loja aparece em uma seção própria, com o detalhamento de cada funcionário (salário, adicionais, descontos, vale alimentação/transporte via Caju), o subtotal e o total por forma de pagamento daquela loja — incluindo funcionários rateados entre lojas. No final, um resumo consolidado de tudo que foi selecionado.</p>' +
+      '<div class="checklist">' +
+        lojasReais.map(function(l){
+          var checked = !preselectLojas || preselectLojas.indexOf(l) > -1;
+          return '<label class="chk-pill"><input type="checkbox" class="pr-loja-chk" value="'+escapeHtml(l)+'" '+(checked?'checked':'')+'> '+escapeHtml(l)+'</label>';
+        }).join('') +
+      '</div>' +
+      '<label class="chk-pill" style="margin-top:10px;display:inline-flex;">' +
+        '<input type="checkbox" id="prSomenteDinheiro"> 💵 Imprimir apenas funcionários pagos em Dinheiro' +
+      '</label>' +
+    '</div>' +
+    '<div class="modal-foot"><button class="btn" id="prCancel">Cancelar</button><button class="btn btn-primary" id="prGo">🖨️ Gerar e imprimir</button></div>';
+  var ov = openModal(html, {large:true});
+  $('#prClose', ov).addEventListener('click', closeModal);
+  $('#prCancel', ov).addEventListener('click', closeModal);
+  $('#prGo', ov).addEventListener('click', function(){
+    var selected = $all('.pr-loja-chk', ov).filter(function(c){return c.checked;}).map(function(c){return c.value;});
+    if(selected.length === 0){ toast('Selecione ao menos uma loja.', 'bad'); return; }
+    var somenteDinheiro = $('#prSomenteDinheiro', ov).checked;
+    buildPrintArea(selected, somenteDinheiro);
+    closeModal();
+    setTimeout(function(){ window.print(); }, 80);
+  });
+}
+
+function filtraEntriesFormaPagamento(entries, forma){
+  return entries.filter(function(e){
+    var fp = FORMAS_PAGAMENTO_SALARIO.indexOf(e.f.formaPagamento) > -1 ? e.f.formaPagamento : 'Banco';
+    return fp === forma;
+  });
+}
+/* Soma somente o líquido do salário (sem Vale Alimentação/Transporte via Caju) das
+   entries já filtradas por forma de pagamento — usado no relatório "somente Dinheiro"
+   para não misturar valores em espécie com benefícios em Caju. */
+function totalLiquidoEntries(entries){
+  return entries.reduce(function(s,e){
+    var frac = toNum(e.percentualLoja) / 100;
+    return s + round2(calcLiquido(e.f) * frac);
+  }, 0);
+}
+function buildPrintArea(lojasSelecionadas, apenasDinheiro){
+  var area = document.getElementById('printArea');
+  var grand = 0;
+  var porFormaAcumulado = {Banco:0, Dinheiro:0, Caju:0};
+  var lojasComDados = lojasSelecionadas.filter(function(loja){
+    var entries = funcionariosEfetivosNaLoja(loja);
+    if(apenasDinheiro) entries = filtraEntriesFormaPagamento(entries, 'Dinheiro');
+    return entries.length > 0;
+  });
+  var html = '<div class="rpt-head"><h1>🔧 TROK Service — Relatório de Folha de Pagamento por Loja'+(apenasDinheiro?' (somente pagamentos em Dinheiro)':'')+'</h1>' +
+    '<div class="rpt-meta">Competência: '+escapeHtml(state.competencia)+' &nbsp;·&nbsp; Gerado em '+todayBR()+(apenasDinheiro?' &nbsp;·&nbsp; 💵 Filtro: apenas funcionários pagos em Dinheiro':'')+'</div></div>';
+
+  // resumo geral por loja
+  html += '<table class="rpt-resumo-table"><thead><tr><th>Loja</th><th>Funcionários</th><th class="num">Total a pagar</th></tr></thead><tbody>';
+  lojasComDados.forEach(function(loja){
+    var entries = funcionariosEfetivosNaLoja(loja);
+    if(apenasDinheiro) entries = filtraEntriesFormaPagamento(entries, 'Dinheiro');
+    var total = apenasDinheiro ? totalLiquidoEntries(entries) : totalLoja(loja);
+    grand += total;
+    html += '<tr><td>'+escapeHtml(loja)+'</td><td>'+entries.length+'</td><td class="num">R$ '+toBRL(total)+'</td></tr>';
+  });
+  html += '</tbody><tfoot><tr><td colspan="2">Total geral selecionado</td><td class="num">R$ '+toBRL(grand)+'</td></tr></tfoot></table>';
+
+  // detalhamento + resumo de pagamento por loja
+  lojasComDados.forEach(function(loja){
+    var entries = funcionariosEfetivosNaLoja(loja);
+    if(apenasDinheiro) entries = filtraEntriesFormaPagamento(entries, 'Dinheiro');
+    var total = apenasDinheiro ? totalLiquidoEntries(entries) : totalLoja(loja);
+    var porFormaLoja = totaisPorFormaPagamentoLoja(entries);
+    porFormaAcumulado.Banco += porFormaLoja.Banco;
+    porFormaAcumulado.Dinheiro += porFormaLoja.Dinheiro;
+    porFormaAcumulado.Caju += porFormaLoja.Caju;
+    html += '<div class="rpt-loja-block"><h3><span>🏬 '+escapeHtml(loja)+'</span><span class="rpt-loja-total">'+entries.length+' func. · R$ '+toBRL(total)+'</span></h3>' +
+      '<table class="rpt-table"><thead><tr><th>Funcionário</th><th>Empresa</th><th style="text-align:right;">Salário base</th><th>Adicionais (detalhado)</th><th>Descontos (detalhado)</th><th>Recebimento</th><th style="text-align:right;">Total nesta loja</th></tr></thead><tbody>';
+    entries.forEach(function(e){
+      var f = e.f;
+      var frac = toNum(e.percentualLoja)/100;
+      html += '<tr><td><b>'+escapeHtml(f.nome)+'</b><div class="rpt-cargo">'+escapeHtml(f.cargo||'')+(e.externo?' · 🔀 rateio, cadastrado em '+escapeHtml(f.loja):'')+'</div></td><td>'+escapeHtml(f.empresa||'')+'</td>' +
+        '<td class="num">'+toBRL(f.salarioBaseMes)+'</td>' +
+        '<td>'+itemsCellHtml(f.proventosExtras, '+')+'</td>' +
+        '<td>'+itemsCellHtml(f.descontosExtras, '−')+'</td>' +
+        '<td>'+recebimentoCellHtml(f, frac)+'</td>' +
+        '<td class="num">'+toBRL(e.valorLoja)+(frac<1?' <span style="font-weight:400;font-size:10px;color:#7a6a4a;">('+Math.round(frac*100)+'%)</span>':'')+'</td></tr>';
+    });
+    html += '<tr class="rpt-subtotal"><td colspan="6">Subtotal — '+escapeHtml(loja)+'</td><td class="num">R$ '+toBRL(total)+'</td></tr>';
+    html += '</tbody></table>';
+    if(entries.some(function(e){return e.temRateio;})){
+      html += '<div style="font-size:10.5px;color:#7a6a4a;margin:4px 0 8px;">🔀 Esta loja inclui funcionário(s) com custo rateado entre lojas — a coluna "Total nesta loja" mostra apenas a fração atribuída aqui, não o valor cheio do salário da pessoa.</div>';
+    }
+    html += pagtoChipsHtml(porFormaLoja, total);
+    html += '</div>';
+  });
+
+  html += '<div class="rpt-grand"><span>Total geral selecionado</span><span class="val">R$ '+toBRL(grand)+'</span></div>';
+
+  html += '<div class="rpt-pagto-dash">' +
+    '<h3>💰 Resumo consolidado por forma de pagamento</h3>' +
+    '<div class="rpt-pagto-cards">' +
+      FORMAS_PAGAMENTO.map(function(p){
+        var pct = grand > 0 ? (porFormaAcumulado[p]/grand*100) : 0;
+        return '<div class="rpt-pagto-card is-'+p+'"><div class="rpt-pagto-icon">'+pagamentoIcone(p)+'</div>' +
+          '<div class="rpt-pagto-label">'+p+'</div>' +
+          '<div class="rpt-pagto-value">R$ '+toBRL(porFormaAcumulado[p])+'</div>' +
+          '<div class="rpt-pagto-pct">'+pct.toFixed(1).replace('.',',')+'% do total</div></div>';
+      }).join('') +
+    '</div>' +
+  '</div>';
+
+  area.innerHTML = html;
+}
+/* ===================== IMPORTAÇÃO MENSAL VIA PDF ===================== */
+var PDFJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+var PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+var pdfjsLoaded = false;
+function ensurePdfJs(cb, errCb){
+  if(pdfjsLoaded && window['pdfjsLib']){ cb(); return; }
+  var s = document.createElement('script');
+  s.src = PDFJS_CDN;
+  s.onload = function(){
+    try{
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+      pdfjsLoaded = true;
+      cb();
+    }catch(e){ errCb(e); }
+  };
+  s.onerror = function(e){ errCb(e); };
+  document.head.appendChild(s);
+}
+
+function linesFromTextItems(items){
+  var pts = items.filter(function(it){ return it.str && it.str.trim(); })
+    .map(function(it){ return {str: it.str, x: it.transform[4], y: it.transform[5]}; });
+  pts.sort(function(a,b){ return (b.y - a.y) || (a.x - b.x); });
+  var lines = [];
+  var current = [];
+  var curY = null;
+  var TOL = 3;
+  for(var i=0;i<pts.length;i++){
+    var it = pts[i];
+    if(curY === null || Math.abs(it.y - curY) <= TOL){
+      current.push(it);
+      if(curY === null) curY = it.y;
+    } else {
+      lines.push(flattenLine(current));
+      current = [it];
+      curY = it.y;
+    }
+  }
+  if(current.length) lines.push(flattenLine(current));
+  return lines;
+}
+function flattenLine(items){
+  items.sort(function(a,b){ return a.x - b.x; });
+  var text = items.map(function(i){ return i.str; }).join(' ');
+  text = text.replace(/\s+/g,' ').trim();
+  text = text.replace(/(\d)\s+,\s*(\d)/g, '$1,$2');
+  text = text.replace(/(\d)\s+\.\s*(\d)/g, '$1.$2');
+  return text;
+}
+
+function extractPdfText(arrayBuffer){
+  return window.pdfjsLib.getDocument({data:arrayBuffer}).promise.then(function(pdf){
+    var pagePromises = [];
+    for(var p=1;p<=pdf.numPages;p++){
+      pagePromises.push(pdf.getPage(p).then(function(page){
+        return page.getTextContent().then(function(content){
+          return linesFromTextItems(content.items).join('\n');
+        });
+      }));
+    }
+    return Promise.all(pagePromises).then(function(pages){ return pages.join('\n'); });
+  });
+}
+
+/* ----- parser de texto da folha (Fortes Pessoal) ----- */
+var NOISE_RE = [
+  /^Folha de Pagamento Pag\.:/, /^Empresa:/, /^Mês\/Ano:/, /^Emiss[aã]o:/,
+  /^Estabelecimento:/, /^C[oó]digo Empregado Evento/, /^Continua\.\.\.$/,
+  /^Admiss[aã]o Dep\. Filhos/
+];
+function parseFolhaTexto(texto){
+  var linhas = texto.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  var out = [];
+  var i = 0, n = linhas.length, pendingObs = null;
+  while(i < n){
+    var line = linhas[i];
+    if(NOISE_RE.some(function(re){ return re.test(line); })){ i++; continue; }
+    if(/^Total Geral/.test(line)) break;
+    if(/^(Férias|Licença)\b/i.test(line) && !/^\d{6}\s/.test(line)){ pendingObs = line; i++; continue; }
+    var mEmp = line.match(/^(\d{6})\s+(.+)$/);
+    if(mEmp){
+      var codigo = mEmp[1], nome = mEmp[2].trim();
+      i++;
+      var cargo = '';
+      if(i<n && /^Cargo:/.test(linhas[i])){ cargo = linhas[i].replace(/^Cargo:\s*/,'').trim(); i++; }
+      var eventos = [];
+      var totalProvento = '0,00', totalDesconto = '0,00';
+      while(i<n){
+        var l = linhas[i];
+        var mt = l.match(/^([\d.]+,\d{2})\s+([\d.]+,\d{2})$/);
+        if(mt){ totalProvento = mt[1]; totalDesconto = mt[2]; i++; break; }
+        var me = l.match(/^(\d{3})\s+(.+?)\s+([\d.]+,\d{2})$/);
+        if(me){ eventos.push({codigo:me[1], detalhe:me[2], valor:me[3]}); i++; continue; }
+        break;
+      }
+      var fgts = '', liquido = '';
+      if(i<n && /^FGTS:/.test(linhas[i])){
+        var mf = linhas[i].match(/^FGTS:\s*([\d.,]*)\s*L[ií]quido a receber:\s*([\d.,]+)$/i);
+        if(mf){ fgts = mf[1]; liquido = mf[2]; }
+        i++;
+      }
+      if(i<n && /^Admiss[aã]o Dep/.test(linhas[i])) i++;
+      var admissao = '', salarioContratual = '';
+      if(i<n){
+        var ma = linhas[i].match(/^(\d{2}\/\d{2}\/\d{4})\s*(.*)$/);
+        if(ma){
+          admissao = ma[1];
+          var rest = ma[2].trim().split(/\s+/).filter(Boolean);
+          if(rest.length >= 4) salarioContratual = rest[3];
+          i++;
+        }
+      }
+      out.push({codigo:codigo, nome:nome, cargo:cargo, eventos:eventos,
+        totalProvento:totalProvento, totalDesconto:totalDesconto, fgts:fgts, liquido:liquido,
+        admissao:admissao, salarioContratual:salarioContratual, observacao: pendingObs || ''});
+      pendingObs = null;
+      continue;
+    }
+    i++;
+  }
+  return out;
+}
+/* Identifica se o texto extraído do PDF é uma folha completa (dia 30, "Folha de
+   Pagamento") ou um adiantamento quinzenal (dia 15, "Adiantamento de Folha"). */
+function detectFormatoFolha(texto){
+  if(/Adiantamento de Folha/i.test(texto)) return 'adiantamento';
+  if(/Folha de Pagamento/i.test(texto)) return 'completa';
+  return 'desconhecida';
+}
+
+/* ----- parser de texto do adiantamento quinzenal (dia 15, Fortes Pessoal) -----
+   Lê apenas a tabela-resumo do início do relatório (Código / Empregado /
+   Referência / Valor), que já traz o valor líquido efetivamente adiantado a
+   cada funcionário — os "recibos" individuais repetidos no resto do PDF são
+   redundantes com essa tabela e não precisam ser reprocessados. */
+function parseAdiantamentoTexto(texto){
+  var linhas = texto.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  var out = [];
+  var i = 0, n = linhas.length, pendingObs = null;
+  while(i < n && !/^C[oó]digo\s+Empregado\s+Refer[eê]ncia\s+Valor/i.test(linhas[i])) i++;
+  if(i < n) i++; // pula a própria linha de cabeçalho da tabela
+  if(i < n && /^de\s*c[aá]lculo$/i.test(linhas[i])) i++; // quebra "Demonstrativo / de cálculo"
+  while(i < n){
+    var line = linhas[i];
+    if(/^Total Geral/i.test(line)) break;
+    if(/^Recibo de Pagamento/i.test(line)) break; // fim da tabela-resumo, início dos recibos individuais
+    if(/^(Férias|Licença)\b/i.test(line) && !/^\d{6}\s/.test(line)){ pendingObs = line; i++; continue; }
+    var mEmp = line.match(/^(\d{6})\s+(.+)$/);
+    if(mEmp){
+      var codigo = mEmp[1];
+      var rest = mEmp[2].trim();
+      var m = rest.match(/^(.*?)(?:\s+([\d.]+,\d{2}))?\s+(\d{1,3}%)\s+(-?[\d.,]+,\d{2})$/);
+      var nome, salarioContratual = '', referencia = '', valorBruto = null;
+      if(m){
+        nome = m[1].trim();
+        salarioContratual = m[2] || '';
+        referencia = m[3];
+        valorBruto = m[4];
+      } else {
+        nome = rest; // sem valor nesta competência (ex: em férias/licença)
+      }
+      i++;
+      var provisaoValor = null;
+      if(i < n){
+        var mp = linhas[i].match(/^077\s+Provis[ãa]o Cred\.?\s*Trab\.?-?\s*Desconto\s+\d{1,3}%\s+(-?[\d.,]+,\d{2})$/i);
+        if(mp){ provisaoValor = mp[1]; i++; }
+      }
+      var valorLiquido = valorBruto;
+      if(provisaoValor !== null && i < n){
+        var ml = linhas[i].match(/^(-?[\d.,]+,\d{2})$/);
+        if(ml){ valorLiquido = ml[1]; i++; }
+      }
+      out.push({
+        codigo: codigo, nome: nome, salarioContratual: salarioContratual,
+        referencia: referencia, valorBruto: valorBruto, provisaoValor: provisaoValor,
+        valorLiquido: valorLiquido, observacao: pendingObs || ''
+      });
+      pendingObs = null;
+      continue;
+    }
+    i++;
+  }
+  return out;
+}
+
+function extrairCabecalho(texto){
+  var mEmp = texto.match(/Empresa:\s*(.+?)\s*-\s*CNPJ/);
+  var mEst = texto.match(/Estabelecimento:\s*(.+?)\s*-\s*[\d.\/-]+\s*$/m);
+  var mComp = texto.match(/Mês\/Ano:\s*(\d{2}\/\d{4})/);
+  return {
+    empresaRaw: mEmp ? mEmp[1].trim() : '',
+    estabelecimento: mEst ? mEst[1].trim() : '',
+    competencia: mComp ? mComp[1] : ''
+  };
+}
+function normalizeEmpresa(raw){
+  var u = stripAccents(raw||'').toUpperCase();
+  if(u.indexOf('CONTRACTUS') > -1) return 'Contractus';
+  if(u.indexOf('BM COMERCIO') > -1 || u.indexOf('BM COMÉRCIO') > -1) return 'BM Comércio';
+  if(u.indexOf('MUD SCAP') > -1) return 'Mud Scap';
+  return raw || '';
+}
+function classificarEvento(detalhe){
+  var d = stripAccents(detalhe||'').toLowerCase();
+  // regras fixas de prioridade
+  if(d.indexOf('liquido negativo compensacao') > -1) return 'desconto';
+  if(d.indexOf('liquido negativo') > -1) return 'provento';
+  for(var i=0;i<state.catalogo.length;i++){
+    var c = state.catalogo[i];
+    if(c.tipo === 'desconto' && d.indexOf(stripAccents(c.chave).toLowerCase()) > -1) return 'desconto';
+  }
+  for(i=0;i<state.catalogo.length;i++){
+    var c2 = state.catalogo[i];
+    if(c2.tipo === 'provento' && d.indexOf(stripAccents(c2.chave).toLowerCase()) > -1) return 'provento';
+  }
+  return null;
+}
+function transformarFuncionarioPdf(p, empresa, estabelecimento){
+  var baseMes = 0;
+  var proventosExtras = [], descontosExtras = [];
+  var naoClassificados = [];
+  p.eventos.forEach(function(ev){
+    var d = stripAccents(ev.detalhe).toLowerCase();
+    var val = toNum(ev.valor);
+    if(d.indexOf('salario-base') > -1 || d.indexOf('pro labore') > -1){
+      baseMes += val;
+      return;
+    }
+    var tipo = classificarEvento(ev.detalhe);
+    if(tipo === null){ naoClassificados.push(ev); tipo = 'provento'; }
+    var item = {id: uid(tipo==='provento'?'p':'d'), descricao: ev.detalhe.trim(), valor: val};
+    if(tipo === 'provento') proventosExtras.push(item); else descontosExtras.push(item);
+  });
+  return {
+    codigo: p.codigo, nomeOriginal: p.nome, cargo: p.cargo,
+    empresa: empresa, estabelecimento: estabelecimento, admissao: p.admissao,
+    salarioContratual: toNum(p.salarioContratual), salarioBaseMes: round2(baseMes),
+    proventosExtras: proventosExtras, descontosExtras: descontosExtras,
+    observacao: p.observacao, naoClassificados: naoClassificados,
+    liquidoOriginalPdf: toNum(p.liquido)
+  };
+}
+
+/* ----- correspondência com funcionários existentes -----
+   Prioridade 1: código de empregado (Fortes Pessoal) + empresa — é a chave estável
+   que o próprio sistema de folha usa, então evita falso-positivo por nome parecido
+   (ex.: "JOSE MAURO DE SOUSA" vs "JOSE FRANCISCO COSTA SOUSA" batiam por nome antes).
+   Prioridade 2 (fallback): correspondência fuzzy por nome — usada só quando o código
+   não bate com ninguém do cadastro (funcionário realmente novo, ou código mudou). */
+function melhorCorrespondencia(nome, codigo, empresa){
+  if(codigo && empresa){
+    var porCodigo = null;
+    state.funcionarios.forEach(function(f){
+      if(!porCodigo && f.codigo === codigo && f.empresa === empresa) porCodigo = f;
+    });
+    if(porCodigo) return {funcionario: porCodigo, score: 1, porCodigo: true};
+    // O PDF trouxe um código de empregado e ele não existe nesta empresa: é (quase
+    // certamente) um funcionário novo. Não arriscar cair no fuzzy-por-nome aqui —
+    // nomes brasileiros comuns (mesmo primeiro nome + sobrenome comum, ex. "SOUSA")
+    // batem alto demais e acabam colando o registro em outra pessoa. Fica como "novo"
+    // e quem revisa decide manualmente se quiser vincular a alguém existente.
+    return {funcionario: null, score: 0, porCodigo: false};
+  }
+  // Sem código disponível (ex.: texto colado manualmente e a tabela não trouxe código) —
+  // único caso em que faz sentido cair no fuzzy-por-nome.
+  var toks = normName(nome);
+  var best = null, bestScore = 0;
+  state.funcionarios.forEach(function(f){
+    var sc = nameScore(toks, normName(f.nome));
+    if(sc > bestScore){ bestScore = sc; best = f; }
+  });
+  return {funcionario: best, score: bestScore, porCodigo: false};
+}
+
+/* ===================== UI DE IMPORTAÇÃO ===================== */
+function openImportModal(){
+  ui._competenciaDetectada = null;
+  ui._houveCompleta = false;
+  ui._houveAdiantamento = false;
+  ui._empresasCompleta = {};
+  ui._empresasAdiantamento = {};
+  var html =
+    '<div class="modal-head"><h2>Importar folha (PDF)</h2><button class="icon-btn" id="impClose">✕</button></div>' +
+    '<div class="modal-body" id="impBody">' +
+      '<div class="dropzone" id="impDrop">' +
+        '<div class="dz-icon">📥</div>' +
+        '<div><b>Clique para escolher</b> ou arraste os PDFs aqui</div>' +
+        '<div style="font-size:11.5px;margin-top:4px;">Pode misturar os dois formatos e vários arquivos de uma vez: <b>"Folha de Pagamento"</b> (fechamento do dia 30) e/ou <b>"Adiantamento de Folha"</b> (adiantamento quinzenal do dia 15) — o app identifica automaticamente qual é qual.</div>' +
+      '</div>' +
+      '<input type="file" id="impFileInput" accept=".pdf" multiple style="display:none;">' +
+      '<div class="filelist" id="impFileList"></div>' +
+      '<details style="margin-top:14px;"><summary style="cursor:pointer;font-size:12.5px;color:var(--ink-dim);">A extração automática não funcionou bem? Cole o texto do PDF manualmente</summary>' +
+        '<textarea id="impPasteArea" rows="6" style="width:100%;margin-top:8px;font-family:var(--mono);font-size:11.5px;" placeholder="Cole aqui o texto copiado do PDF (Ctrl+A, Ctrl+C dentro do PDF, depois Ctrl+V aqui)"></textarea>' +
+        '<button class="btn btn-sm" id="impPasteBtn" style="margin-top:6px;">Processar texto colado</button>' +
+      '</details>' +
+    '</div>' +
+    '<div class="modal-foot"><button class="btn" id="impCancel">Cancelar</button></div>';
+  var ov = openModal(html, {large:true});
+  $('#impClose', ov).addEventListener('click', closeModal);
+  $('#impCancel', ov).addEventListener('click', closeModal);
+
+  var drop = $('#impDrop', ov), input = $('#impFileInput', ov);
+  drop.addEventListener('click', function(){ input.click(); });
+  input.addEventListener('change', function(){ handleFiles(Array.prototype.slice.call(input.files)); });
+  ['dragenter','dragover'].forEach(function(evt){
+    drop.addEventListener(evt, function(e){ e.preventDefault(); drop.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(function(evt){
+    drop.addEventListener(evt, function(e){ e.preventDefault(); drop.classList.remove('drag'); });
+  });
+  drop.addEventListener('drop', function(e){
+    var files = Array.prototype.slice.call(e.dataTransfer.files).filter(function(f){ return f.type==='application/pdf' || /\.pdf$/i.test(f.name); });
+    handleFiles(files);
+  });
+  $('#impPasteBtn', ov).addEventListener('click', function(){
+    var txt = $('#impPasteArea', ov).value;
+    if(!txt.trim()){ toast('Cole algum texto primeiro.', 'bad'); return; }
+    processarTexto(txt, 'texto colado');
+  });
+
+  var staged = []; // {codigo,nomeOriginal,...transformado, matchSugerido, score}
+  var arquivosProcessados = [];
+
+  function handleFiles(files){
+    if(!files.length) return;
+    $('#impFileList', ov).innerHTML = '<div style="color:var(--ink-dim);">Lendo arquivo(s)…</div>';
+    ensurePdfJs(function(){
+      var chain = Promise.resolve();
+      files.forEach(function(file){
+        chain = chain.then(function(){
+          return file.arrayBuffer().then(function(buf){
+            return extractPdfText(buf).then(function(texto){
+              processarTexto(texto, file.name);
+            });
+          }).catch(function(err){
+            console.log(err);
+            arquivosProcessados.push({nome:file.name, ok:false, qtd:0});
+            renderFileList();
+            toast('Não foi possível ler "'+file.name+'". Tente colar o texto manualmente.', 'bad');
+          });
+        });
+      });
+      chain.then(function(){
+        if(staged.length) abrirRevisao();
+      });
+    }, function(err){
+      console.log(err);
+      toast('Não foi possível carregar o leitor de PDF. Use a opção de colar texto manualmente.', 'bad');
+    });
+  }
+
+  function processarTexto(texto, origem){
+    var cab = extrairCabecalho(texto);
+    var empresa = normalizeEmpresa(cab.empresaRaw);
+    var formato = detectFormatoFolha(texto);
+    if(cab.competencia) ui._competenciaDetectada = cab.competencia;
+    var qtd = 0;
+    if(formato === 'adiantamento'){
+      ui._houveAdiantamento = true;
+      if(empresa) ui._empresasAdiantamento[empresa] = true;
+      var parsedAd = parseAdiantamentoTexto(texto);
+      parsedAd.forEach(function(p){
+        var match = melhorCorrespondencia(p.nome, p.codigo, empresa);
+        var item = {
+          _id: uid('stg'), _tipo: 'adiantamento', _origem: origem,
+          codigo: p.codigo, nomeOriginal: p.nome, cargo: '',
+          empresa: empresa, estabelecimento: cab.estabelecimento,
+          salarioContratual: toNum(p.salarioContratual),
+          referencia: p.referencia,
+          valorBruto: toNum(p.valorBruto),
+          provisaoValor: p.provisaoValor ? toNum(p.provisaoValor) : 0,
+          valorLiquido: toNum(p.valorLiquido),
+          observacao: p.observacao
+        };
+        item._matchId = (match.score >= 0.85) ? match.funcionario.id : null;
+        item._matchScore = match.score;
+        item._matchPorCodigo = !!match.porCodigo;
+        item._loja = item._matchId ? null : 'A Definir';
+        item._incluir = !!p.valorBruto; // sem valor (ex: férias/licença) já vem desmarcado
+        staged.push(item);
+        qtd++;
+      });
+    } else {
+      ui._houveCompleta = true;
+      if(empresa) ui._empresasCompleta[empresa] = true;
+      var parsed = parseFolhaTexto(texto);
+      parsed.forEach(function(p){
+        var t = transformarFuncionarioPdf(p, empresa, cab.estabelecimento);
+        var match = melhorCorrespondencia(t.nomeOriginal, t.codigo, empresa);
+        t._matchId = (match.score >= 0.85) ? match.funcionario.id : null;
+        t._matchScore = match.score;
+        t._matchPorCodigo = !!match.porCodigo;
+        t._loja = t._matchId ? null : 'A Definir';
+        t._incluir = true;
+        t._tipo = 'completa';
+        t._origem = origem;
+        t._id = uid('stg');
+        staged.push(t);
+        qtd++;
+      });
+    }
+    arquivosProcessados.push({nome:origem, ok:true, qtd:qtd, tipo:formato});
+    renderFileList();
+  }
+  function renderFileList(){
+    var c = $('#impFileList', ov);
+    if(!c) return;
+    c.innerHTML = arquivosProcessados.map(function(a){
+      var rotulo = a.tipo==='adiantamento' ? ' — adiantamento (dia 15)' : (a.tipo==='completa' ? ' — folha completa (dia 30)' : '');
+      return '<div class="fitem"><span>'+(a.ok?'✅':'⚠️')+' '+escapeHtml(a.nome)+rotulo+'</span><span>'+(a.ok ? a.qtd+' funcionário(s) lido(s)' : 'falhou')+'</span></div>';
+    }).join('');
+  }
+
+  function abrirRevisao(){
+    closeModal();
+    renderReviewModal(staged);
+  }
+}
+
+function renderReviewModal(staged){
+  var novos = staged.filter(function(s){ return !s._matchId; }).length;
+  var atualiza = staged.length - novos;
+  var qtdAdiantamento = staged.filter(function(s){ return s._tipo==='adiantamento'; }).length;
+  var explicacaoAdiantamento = qtdAdiantamento
+    ? '<p style="font-size:12.5px;color:var(--ink-dim);">💰 '+qtdAdiantamento+' registro(s) são de <b>adiantamento quinzenal (dia 15)</b> — o valor fica guardado no cadastro do funcionário como referência e não altera o salário/proventos/descontos da folha completa (dia 30).</p>'
+    : '';
+  var html =
+    '<div class="modal-head"><h2>Revisar importação — '+staged.length+' registro(s)</h2><button class="icon-btn" id="revClose">✕</button></div>' +
+    '<div class="modal-body">' +
+      '<p style="font-size:12.5px;color:var(--ink-dim);">'+atualiza+' serão <b>atualizados</b> (funcionário já existe) e '+novos+' serão <b>criados</b> como novos. Revise antes de confirmar — você pode desmarcar itens, trocar a correspondência ou escolher a loja de cada novo funcionário.</p>' +
+      explicacaoAdiantamento +
+      '<div id="revTableWrap"></div>' +
+    '</div>' +
+    '<div class="modal-foot"><button class="btn" id="revCancel">Cancelar importação</button><button class="btn btn-primary" id="revConfirm">✅ Confirmar importação</button></div>';
+  var ov = openModal(html, {large:true});
+  $('#revClose', ov).addEventListener('click', closeModal);
+  $('#revCancel', ov).addEventListener('click', closeModal);
+
+  function renderTable(){
+    var wrap = $('#revTableWrap', ov);
+    wrap.innerHTML = '<table class="review-table"><thead><tr>' +
+      '<th></th><th>Nome (PDF)</th><th>Empresa</th><th>Tipo</th><th>Status / correspondência</th><th>Loja</th><th>Valor novo</th><th>Valor anterior</th>' +
+      '</tr></thead><tbody>' + staged.map(rowHtml).join('') + '</tbody></table>';
+
+    $all('tr[data-id]', wrap).forEach(function(row){
+      var s = staged.find(function(x){ return x._id === row.dataset.id; });
+      var chk = row.querySelector('[data-f=incluir]');
+      chk.addEventListener('change', function(){ s._incluir = chk.checked; row.style.opacity = chk.checked?'1':'.4'; });
+      var sel = row.querySelector('[data-f=match]');
+      if(sel) sel.addEventListener('change', function(){
+        s._matchId = sel.value === '__novo__' ? null : sel.value;
+        s._matchPorCodigo = false; // escolha manual, não veio da correspondência automática por código
+        renderTable();
+      });
+      var lojaSel = row.querySelector('[data-f=loja]');
+      if(lojaSel) lojaSel.addEventListener('change', function(){ s._loja = lojaSel.value; });
+    });
+  }
+  function rowHtml(s){
+    var isAd = s._tipo === 'adiantamento';
+    var atual = s._matchId ? state.funcionarios.find(function(f){return f.id===s._matchId;}) : null;
+    var liquidoNovo, liquidoAntigo = null;
+    if(isAd){
+      liquidoNovo = toNum(s.valorLiquido);
+      if(atual && atual.adiantamentos && ui._competenciaDetectada && atual.adiantamentos[ui._competenciaDetectada]){
+        liquidoAntigo = toNum(atual.adiantamentos[ui._competenciaDetectada].valorLiquido);
+      }
+    } else {
+      liquidoNovo = round2(toNum(s.salarioBaseMes) + s.proventosExtras.reduce(function(a,x){return a+x.valor;},0) - s.descontosExtras.reduce(function(a,x){return a+x.valor;},0));
+      liquidoAntigo = atual ? calcLiquido(atual) : null;
+    }
+    var deltaClass = (liquidoAntigo!==null) ? (liquidoNovo >= liquidoAntigo ? 'delta-up' : 'delta-down') : '';
+    var matchOptions = '<option value="__novo__"'+(!s._matchId?' selected':'')+'>— Criar novo funcionário —</option>' +
+      state.funcionarios.slice().sort(function(a,b){return a.nome.localeCompare(b.nome,'pt-BR');}).map(function(f){
+        return '<option value="'+f.id+'"'+(s._matchId===f.id?' selected':'')+'>'+escapeHtml(f.nome)+' ('+escapeHtml(f.loja)+')</option>';
+      }).join('');
+    return '<tr data-id="'+s._id+'" style="'+(s._incluir?'':'opacity:.4;')+'">' +
+      '<td><input type="checkbox" data-f="incluir"'+(s._incluir?' checked':'')+'></td>' +
+      '<td><b>'+escapeHtml(s.nomeOriginal)+'</b><div class="emp-cargo">'+escapeHtml(s.cargo||s.observacao||'')+'</div></td>' +
+      '<td>'+escapeHtml(s.empresa)+'</td>' +
+      '<td>'+(isAd ? '<span class="status-pill" style="background:#fde6d2;color:#8a4710;">💰 Adiant. dia 15</span>' : '<span class="status-pill" style="background:#e1f3e6;color:#1f5c39;">📄 Folha dia 30</span>')+'</td>' +
+      '<td>' + (s._matchId
+          ? '<span class="status-pill update">Atualizar</span> ' + (s._matchPorCodigo
+              ? '<span title="Encontrado pelo código do empregado — confiável" style="font-size:10.5px;color:#1f5c39;">🔒 por código</span>'
+              : '<span title="Encontrado só por semelhança de nome — confira antes de confirmar" style="font-size:10.5px;color:#8a4710;">⚠️ por nome (conferir)</span>')
+          : '<span class="status-pill new">Novo</span> ') +
+        '<select data-f="match">'+matchOptions+'</select></td>' +
+      '<td>' + (s._matchId
+          ? escapeHtml(atual ? atual.loja : '')
+          : '<select data-f="loja">'+lojaOptionsHtml(s._loja||'A Definir')+'</select>') + '</td>' +
+      '<td class="'+deltaClass+'">'+(isAd && !s.valorBruto ? '<span class="rpt-dash">— (sem valor nesta comp.)</span>' : 'R$ '+toBRL(liquidoNovo))+'</td>' +
+      '<td>'+(liquidoAntigo!==null ? 'R$ '+toBRL(liquidoAntigo) : '—')+'</td>' +
+    '</tr>';
+  }
+  renderTable();
+
+  $('#revConfirm', ov).addEventListener('click', function(){
+    var incluidos = staged.filter(function(s){ return s._incluir; });
+    if(incluidos.length === 0){ toast('Nenhum item selecionado para importar.', 'bad'); return; }
+    var compAlvo = ui._competenciaDetectada || state.competencia;
+    coletarDatasEExecutar(incluidos, compAlvo);
+  });
+
+  function coletarDatasEExecutar(incluidos, compAlvo){
+    var precisaCompleta = incluidos.some(function(s){ return s._tipo !== 'adiantamento'; });
+    var precisaAdiantamento = incluidos.some(function(s){ return s._tipo === 'adiantamento'; });
+    var datasExistentes = (state.datasPagamento && state.datasPagamento[compAlvo]) || {};
+    function defaultDia(dia){
+      var partes = compAlvo.split('/'); // ['MM','AAAA']
+      if(partes.length !== 2) return '';
+      return partes[1] + '-' + partes[0] + '-' + dia;
+    }
+    function comAdiantamento(dataCompleta){
+      if(precisaAdiantamento){
+        pedirDataPagamento('o Adiantamento quinzenal (dia 15) — competência '+compAlvo, datasExistentes.adiantamento || defaultDia('15'), function(dataAd){
+          executarImportacao(incluidos, compAlvo, {completa: dataCompleta, adiantamento: dataAd});
+        });
+      } else {
+        executarImportacao(incluidos, compAlvo, {completa: dataCompleta, adiantamento: datasExistentes.adiantamento || null});
+      }
+    }
+    if(precisaCompleta){
+      pedirDataPagamento('a Folha completa (dia 30) — competência '+compAlvo, datasExistentes.completa || defaultDia('30'), function(dataCo){
+        comAdiantamento(dataCo);
+      });
+    } else {
+      comAdiantamento(datasExistentes.completa || null);
+    }
+  }
+
+  function executarImportacao(incluidos, compAlvo, datasPagto){
+    // arquivar snapshot da competência atual antes de sobrescrever
+    if(state.competencia){
+      state.historico[state.competencia] = JSON.parse(JSON.stringify(state.funcionarios));
+    }
+    if(!state.datasPagamento) state.datasPagamento = {};
+    state.datasPagamento[compAlvo] = datasPagto;
+
+    var criados = 0, atualizados = 0, adAtualizados = 0, adCriados = 0;
+    var compAdiantamento = compAlvo;
+    var tocadosCompleta = {}; // ids de funcionários presentes nesta importação de folha completa
+    var tocadosAdiantamento = {}; // ids de funcionários presentes nesta importação de adiantamento
+    incluidos.forEach(function(s){
+      if(s._tipo === 'adiantamento'){
+        var registroAd = {
+          valorBruto: s.valorBruto, provisaoValor: s.provisaoValor, valorLiquido: s.valorLiquido,
+          referencia: s.referencia, importadoEm: todayBR()
+        };
+        if(s._matchId){
+          var fAd = state.funcionarios.find(function(x){ return x.id === s._matchId; });
+          if(fAd){
+            if(!fAd.adiantamentos) fAd.adiantamentos = {};
+            fAd.adiantamentos[compAdiantamento] = registroAd;
+            // O adiantamento (dia 15) não traz INSS/Taxa Negocial/demais descontos e
+            // proventos da folha completa (dia 30) — o que estiver nesses campos é do
+            // fechamento anterior e fica desatualizado assim que um novo ciclo começa.
+            // Zera os itens (proventos/descontos) e usa como salário-base o valor
+            // LÍQUIDO do próprio adiantamento importado (o número que realmente está
+            // no PDF de hoje) — não o salário contratual cheio nem 0, que não vêm do
+            // PDF. Cadastro (loja, cargo, empresa, admissão) não é tocado. Volta a ser
+            // recalculado quando a próxima Folha completa (dia 30) entrar.
+            fAd.proventosExtras = [];
+            fAd.descontosExtras = [];
+            fAd.salarioBaseMes = toNum(registroAd.valorLiquido);
+            fAd.observacao = 'Aguardando Folha completa (dia 30) — valor exibido é o líquido do adiantamento de ' + compAdiantamento + ' (dia 15), ainda não o fechamento do mês.';
+            tocadosAdiantamento[fAd.id] = true;
+            adAtualizados++;
+          }
+        } else {
+          var novoAd = {
+            id: uid('f'), codigo: s.codigo, nome: s.nomeOriginal, cargo: '',
+            empresa: s.empresa, loja: s._loja || 'A Definir', admissao: '',
+            salarioContratual: s.salarioContratual, salarioBaseMes: toNum(s.valorLiquido),
+            formaPagamento: 'Banco', valeAlimentacao: 0, valeTransporte: 0,
+            proventosExtras: [], descontosExtras: [], rateioLojas: [],
+            observacao: s.observacao || ('Cadastro criado a partir do adiantamento de ' + compAdiantamento + ' — valor exibido é o líquido do adiantamento (dia 15), ainda não o fechamento do mês.'),
+            adiantamentos: {}, ativo: true
+          };
+          novoAd.adiantamentos[compAdiantamento] = registroAd;
+          state.funcionarios.push(novoAd);
+          tocadosAdiantamento[novoAd.id] = true;
+          adCriados++;
+        }
+        return;
+      }
+      if(s._matchId){
+        var f = state.funcionarios.find(function(x){ return x.id === s._matchId; });
+        if(f){
+          f.cargo = s.cargo || f.cargo;
+          f.empresa = s.empresa || f.empresa;
+          f.admissao = s.admissao || f.admissao;
+          f.salarioContratual = s.salarioContratual || f.salarioContratual;
+          f.salarioBaseMes = s.salarioBaseMes;
+          f.proventosExtras = s.proventosExtras;
+          f.descontosExtras = s.descontosExtras;
+          f.observacao = s.observacao;
+          tocadosCompleta[f.id] = true;
+          atualizados++;
+        }
+      } else {
+        var novoF = {
+          id: uid('f'), codigo: s.codigo, nome: s.nomeOriginal, cargo: s.cargo,
+          empresa: s.empresa, loja: s._loja || 'A Definir', admissao: s.admissao,
+          salarioContratual: s.salarioContratual, salarioBaseMes: s.salarioBaseMes,
+          formaPagamento: 'Banco', valeAlimentacao: 0, valeTransporte: 0,
+          proventosExtras: s.proventosExtras, descontosExtras: s.descontosExtras,
+          rateioLojas: [], adiantamentos: {},
+          observacao: s.observacao, ativo: true
+        };
+        state.funcionarios.push(novoF);
+        tocadosCompleta[novoF.id] = true;
+        criados++;
+      }
+    });
+
+    // Apaga/zera informações antigas de quem NÃO apareceu nesta importação, dentro da
+    // mesma empresa importada — assim, ao subir um PDF novo (correção, funcionário que
+    // saiu, etc.), os dados velhos não ficam "grudados" no cadastro indefinidamente.
+    var zeradosCompleta = 0, removidosAdiantamento = 0;
+    if(ui._houveCompleta){
+      Object.keys(ui._empresasCompleta||{}).forEach(function(emp){
+        state.funcionarios.forEach(function(f){
+          if(f.empresa !== emp || f.ativo === false || tocadosCompleta[f.id]) return;
+          var tinhaDados = toNum(f.salarioBaseMes) !== 0 || (f.proventosExtras&&f.proventosExtras.length) || (f.descontosExtras&&f.descontosExtras.length);
+          if(tinhaDados){
+            f.salarioBaseMes = 0;
+            f.proventosExtras = [];
+            f.descontosExtras = [];
+            f.observacao = 'Não constou na última folha completa importada (' + compAdiantamento + ') — verifique.';
+            zeradosCompleta++;
+          }
+        });
+      });
+    }
+    if(ui._houveAdiantamento){
+      Object.keys(ui._empresasAdiantamento||{}).forEach(function(emp){
+        state.funcionarios.forEach(function(f){
+          if(f.empresa !== emp || f.ativo === false || tocadosAdiantamento[f.id]) return;
+          if(f.adiantamentos && f.adiantamentos[compAdiantamento]){
+            delete f.adiantamentos[compAdiantamento];
+            removidosAdiantamento++;
+          }
+        });
+      });
+    }
+
+    if(ui._houveCompleta && ui._competenciaDetectada) state.competencia = ui._competenciaDetectada;
+    markDirty();
+    saveState();
+    closeModal();
+    ui.view = {type:'dashboard'};
+    renderApp();
+    var partes = [];
+    if(atualizados || criados) partes.push(atualizados+' funcionário(s) atualizado(s) e '+criados+' novo(s) criado(s) (folha completa)');
+    if(adAtualizados || adCriados) partes.push(adAtualizados+' adiantamento(s) atualizado(s) e '+adCriados+' novo(s) (dia 15)');
+    if(zeradosCompleta) partes.push(zeradosCompleta+' funcionário(s) zerado(s) por não constarem mais na folha importada');
+    if(removidosAdiantamento) partes.push(removidosAdiantamento+' adiantamento(s) antigo(s) removido(s) por não constarem mais no PDF');
+    toast(partes.join(' · ') || 'Importação concluída.', 'good');
+  }
+}
+/* ===================== BOOT ===================== */
+loadState(function(usedSeed){
+  renderApp();
+  if(usedSeed){
+    toast('Dados iniciais carregados a partir da folha de Junho/2026.', 'good');
+  }
+});
+
+</script>
+</body>
+</html>
