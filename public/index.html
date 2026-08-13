@@ -1188,7 +1188,8 @@ function confirmDialog(title, msg, onConfirm){
    a importação — a folha costuma ser fechada/cadastrada alguns dias ANTES do dia em
    que o pagamento sai de fato, então guardamos essa data separada da competência
    (MM/AAAA) para depois dar pra consultar "quanto foi pago em tal dia". */
-function pedirDataPagamento(rotulo, defaultDate, cb){
+function pedirDataPagamento(rotulo, defaultDate, cb, opts){
+  opts = opts || {};
   var html =
     '<div class="modal-head"><h2>📅 Data de pagamento</h2></div>' +
     '<div class="modal-body">' +
@@ -1196,16 +1197,20 @@ function pedirDataPagamento(rotulo, defaultDate, cb){
       '<label style="display:block;margin-top:10px;font-size:12.5px;font-weight:600;">Data de pagamento</label>' +
       '<input type="date" id="dpInput" value="'+escapeHtml(defaultDate||'')+'" style="margin-top:4px;">' +
     '</div>' +
-    '<div class="modal-foot"><button class="btn btn-primary" id="dpOk">Confirmar</button></div>';
+    '<div class="modal-foot">' +
+      (opts.permitirPular ? '<button class="btn" id="dpPular">Não se aplica / pular</button>' : '') +
+      '<button class="btn btn-primary" id="dpOk">Confirmar</button>' +
+    '</div>';
   var ov = openModal(html, {closableBackdrop:false});
   var input = $('#dpInput', ov);
   input.focus();
   function submit(){
     var val = input.value;
-    if(!val){ toast('Informe a data de pagamento.', 'bad'); return; }
+    if(!val){ toast('Informe a data de pagamento (ou use "pular").', 'bad'); return; }
     cb(val);
   }
   $('#dpOk', ov).addEventListener('click', submit);
+  if(opts.permitirPular) $('#dpPular', ov).addEventListener('click', function(){ cb(null); });
   input.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); submit(); } });
 }
 
@@ -1496,6 +1501,7 @@ function importBackup(file){
         state = parsed;
         if(!state.catalogo) state.catalogo = CATALOGO_PADRAO.slice();
         if(!state.historico) state.historico = {};
+        if(!state.datasPagamento) state.datasPagamento = {};
         state.funcionarios.forEach(migrarFuncionario);
         markDirty();
         saveState();
@@ -1653,7 +1659,10 @@ function openHistoricoModal(){
         : '<div class="checklist">'+competencias.map(function(c){
             var d = (state.datasPagamento && state.datasPagamento[c]) || {};
             var datasTxt = [d.completa ? 'Folha '+dataBR(d.completa) : null, d.adiantamento ? 'Adiant. '+dataBR(d.adiantamento) : null].filter(Boolean).join(' · ');
-            return '<div class="chk-pill" data-c="'+escapeHtml(c)+'" style="cursor:pointer;">📅 '+escapeHtml(c)+(datasTxt ? '<div style="font-size:10px;color:var(--ink-dim);font-weight:400;margin-top:2px;">'+datasTxt+'</div>' : '')+'</div>';
+            return '<div class="chk-pill" data-c="'+escapeHtml(c)+'" style="cursor:pointer;position:relative;padding-right:26px;">📅 '+escapeHtml(c)+
+              (datasTxt ? '<div style="font-size:10px;color:var(--ink-dim);font-weight:400;margin-top:2px;">'+datasTxt+'</div>' : '<div style="font-size:10px;color:var(--ink-dim);font-weight:400;margin-top:2px;">Sem data de pagamento definida</div>') +
+              '<button class="icon-btn hist-editar-datas" data-c="'+escapeHtml(c)+'" title="Editar data de pagamento" style="position:absolute;top:4px;right:4px;width:20px;height:20px;font-size:11px;">✏️</button>' +
+            '</div>';
           }).join('')+'</div><div id="histDetail" style="margin-top:16px;"></div>') +
     '</div>' +
     '<div class="modal-foot"><button class="btn" id="histDone">Fechar</button></div>';
@@ -1692,6 +1701,27 @@ function openHistoricoModal(){
       '</div>';
     }).join('');
   }
+
+  function editarDatasCompetencia(comp){
+    var existentes = (state.datasPagamento && state.datasPagamento[comp]) || {};
+    pedirDataPagamento('a Folha completa (dia 30) — competência '+comp, existentes.completa || '', function(dataCo){
+      pedirDataPagamento('o Adiantamento (dia 15) — competência '+comp, existentes.adiantamento || '', function(dataAd){
+        if(!state.datasPagamento) state.datasPagamento = {};
+        state.datasPagamento[comp] = {completa: dataCo, adiantamento: dataAd};
+        markDirty();
+        saveState();
+        closeModal();
+        openHistoricoModal();
+        toast('Data(s) de pagamento de '+comp+' atualizada(s).', 'good');
+      }, {permitirPular:true});
+    }, {permitirPular:true});
+  }
+  $all('.hist-editar-datas', ov).forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      editarDatasCompetencia(btn.dataset.c);
+    });
+  });
 
   $all('.chk-pill', ov).forEach(function(p){
     p.addEventListener('click', function(){
