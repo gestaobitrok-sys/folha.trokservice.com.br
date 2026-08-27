@@ -1694,22 +1694,33 @@ function openHistoricoModal(){
         });
         rotulo = '📄 Folha completa (dia 30) · competência '+escapeHtml(m.comp);
       } else {
+        // O adiantamento em si não guarda a forma de pagamento (é só um valor líquido
+        // importado do PDF do dia 15), então usamos a forma cadastrada no funcionário
+        // (Banco/Dinheiro) — é como ele efetivamente recebe, na prática.
         registros = state.funcionarios.filter(function(f){ return f.adiantamentos && f.adiantamentos[m.comp]; }).map(function(f){
-          return {nome: f.nome, loja: f.loja || '—', forma: 'Adiantamento', valor: toNum(f.adiantamentos[m.comp].valorLiquido)};
+          var fp = FORMAS_PAGAMENTO_SALARIO.indexOf(f.formaPagamento) > -1 ? f.formaPagamento : 'Banco';
+          return {nome: f.nome, loja: f.loja || '—', forma: fp, valor: toNum(f.adiantamentos[m.comp].valorLiquido)};
         });
         rotulo = '💰 Adiantamento (dia 15) · competência '+escapeHtml(m.comp);
       }
       registros.sort(function(a,b){ return a.loja.localeCompare(b.loja,'pt-BR') || a.nome.localeCompare(b.nome,'pt-BR'); });
       var total = registros.reduce(function(s,r){ return s + r.valor; }, 0);
 
-      // Quebra por forma de pagamento (Banco/Dinheiro/Caju) — só faz sentido para a
-      // folha completa, que registra a forma de cada funcionário; o adiantamento não
-      // guarda essa informação (é sempre um valor só, sem discriminar Banco/Dinheiro).
-      var porFormaHtml = '';
+      // Quebra por forma de pagamento, calculada direto sobre os registros deste
+      // pagamento (funciona tanto pra folha completa — que também soma o Caju/VA-VT —
+      // quanto pro adiantamento, que só tem Banco/Dinheiro).
+      var porFormaMapa = {};
+      registros.forEach(function(r){ porFormaMapa[r.forma] = (porFormaMapa[r.forma]||0) + r.valor; });
       if(m.tipo === 'completa'){
-        var porForma = totaisPorFormaPagamento(lista);
-        porFormaHtml = '<div style="margin-top:8px;">' + pagtoChipsHtml(porForma, total) + '</div>';
+        var totalCajuGeral = lista.reduce(function(s,f){ return s + totalCaju(f); }, 0);
+        if(totalCajuGeral > 0) porFormaMapa['Caju'] = totalCajuGeral;
       }
+      var formasPresentes = Object.keys(porFormaMapa);
+      var porFormaHtml = formasPresentes.length ? ('<div style="margin-top:8px;"><div class="rpt-loja-pagto">' +
+        formasPresentes.map(function(p){
+          var classe = (p==='Banco'||p==='Dinheiro') ? p : 'Caju';
+          return '<div class="rpt-loja-chip is-'+classe+'"><span>'+pagamentoIcone(p)+' '+escapeHtml(p)+'</span><span class="val">R$ '+toBRL(porFormaMapa[p])+'</span></div>';
+        }).join('') + '</div></div>') : '';
 
       var porLoja = {};
       registros.forEach(function(r){
