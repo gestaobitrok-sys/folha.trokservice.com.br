@@ -1685,19 +1685,50 @@ function openHistoricoModal(){
       return;
     }
     out.innerHTML = matches.map(function(m){
-      var lista, total, rotulo;
+      var registros, rotulo;
       if(m.tipo === 'completa'){
-        lista = (m.comp === state.competencia) ? state.funcionarios.filter(function(f){return f.ativo!==false;}) : (state.historico[m.comp]||[]);
-        total = lista.reduce(function(s,f){ return s + calcLiquido(f); }, 0);
-        rotulo = '📄 Folha completa · competência '+escapeHtml(m.comp);
+        var lista = (m.comp === state.competencia) ? state.funcionarios.filter(function(f){return f.ativo!==false;}) : (state.historico[m.comp]||[]);
+        registros = lista.map(function(f){
+          var fp = FORMAS_PAGAMENTO_SALARIO.indexOf(f.formaPagamento) > -1 ? f.formaPagamento : 'Banco';
+          return {nome: f.nome, loja: f.loja || '—', forma: fp, valor: calcLiquido(f)};
+        });
+        rotulo = '📄 Folha completa (dia 30) · competência '+escapeHtml(m.comp);
       } else {
-        lista = state.funcionarios.filter(function(f){ return f.adiantamentos && f.adiantamentos[m.comp]; });
-        total = lista.reduce(function(s,f){ return s + toNum(f.adiantamentos[m.comp].valorLiquido); }, 0);
+        registros = state.funcionarios.filter(function(f){ return f.adiantamentos && f.adiantamentos[m.comp]; }).map(function(f){
+          return {nome: f.nome, loja: f.loja || '—', forma: 'Adiantamento', valor: toNum(f.adiantamentos[m.comp].valorLiquido)};
+        });
         rotulo = '💰 Adiantamento (dia 15) · competência '+escapeHtml(m.comp);
       }
+      registros.sort(function(a,b){ return a.loja.localeCompare(b.loja,'pt-BR') || a.nome.localeCompare(b.nome,'pt-BR'); });
+      var total = registros.reduce(function(s,r){ return s + r.valor; }, 0);
+
+      var porLoja = {};
+      registros.forEach(function(r){
+        if(!porLoja[r.loja]) porLoja[r.loja] = {qtd:0, valor:0};
+        porLoja[r.loja].qtd++;
+        porLoja[r.loja].valor += r.valor;
+      });
+      var lojasOrdenadas = Object.keys(porLoja).sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
+
+      var tabelaLoja = lojasOrdenadas.length
+        ? '<table class="review-table" style="margin-top:6px;"><thead><tr><th>Loja</th><th>Funcionários</th><th>Total pago</th></tr></thead><tbody>' +
+            lojasOrdenadas.map(function(l){
+              return '<tr><td>'+escapeHtml(l)+'</td><td>'+porLoja[l].qtd+'</td><td>R$ '+toBRL(porLoja[l].valor)+'</td></tr>';
+            }).join('') + '</tbody></table>'
+        : '<div class="empty-state" style="padding:12px;">Nenhum funcionário nesse pagamento.</div>';
+
+      var tabelaFuncionarios = registros.length
+        ? '<table class="review-table" style="margin-top:6px;"><thead><tr><th>Funcionário</th><th>Loja</th><th>Forma</th><th>Valor pago</th></tr></thead><tbody>' +
+            registros.map(function(r){
+              return '<tr><td>'+escapeHtml(r.nome)+'</td><td>'+escapeHtml(r.loja)+'</td><td>'+escapeHtml(r.forma)+'</td><td>R$ '+toBRL(r.valor)+'</td></tr>';
+            }).join('') + '</tbody></table>'
+        : '<div class="empty-state" style="padding:12px;">Nenhum funcionário nesse pagamento.</div>';
+
       return '<div class="summary-box" style="margin-top:8px;">' +
         '<div class="sr total"><span>'+rotulo+'</span><span class="val">R$ '+toBRL(total)+'</span></div>' +
-        '<div style="font-size:11px;color:var(--ink-dim);margin-top:2px;">'+lista.length+' funcionário(s)</div>' +
+        '<div style="font-size:11px;color:var(--ink-dim);margin-top:2px;">'+registros.length+' funcionário(s)</div>' +
+        '<details style="margin-top:10px;"><summary style="cursor:pointer;font-size:12.5px;font-weight:700;color:var(--accent);">🏬 Ver por loja</summary>'+tabelaLoja+'</details>' +
+        '<details style="margin-top:8px;"><summary style="cursor:pointer;font-size:12.5px;font-weight:700;color:var(--accent);">🧑 Ver por funcionário</summary>'+tabelaFuncionarios+'</details>' +
       '</div>';
     }).join('');
   }
